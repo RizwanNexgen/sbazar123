@@ -1,0 +1,2301 @@
+<?php
+namespace App\Http\Controllers\App;
+
+//validator is builtin class in laravel
+use Validator;
+use DB;
+use DateTime;
+use Hash;
+use Auth;
+use Illuminate\Foundation\Auth\ThrottlesLogins;
+use Illuminate\Http\Request;
+use Illuminate\Routing\Controller;
+use App\Models\AppModels\Product;
+use App\Models\AppModels\Cart;
+use Carbon\Carbon;
+use App\Models\Core\Manufacturers;
+use App\Models\Core\Setting;
+class MyProductController extends Controller
+{
+
+   public function __construct(Setting $setting)
+  {    
+    $this->Setting = $setting;
+    
+  }
+  
+  
+  
+  public function brand_product(Request $request){
+            
+    
+    
+
+        $products = DB::table('products')->where('products.manufacturers_id', '=', $request->brand_id)
+        ->LeftJoin('bundles_products', 'bundles_products.product_id', '=', 'products.products_id')
+        ->LeftJoin('products_description', 'products_description.products_id', '=', 'products.products_id')
+        ->LeftJoin('products as sub_products', 'sub_products.parent_products_id', '=', 'products.products_id')
+        ->LeftJoin('images', 'images.id', '=', 'products.products_image')
+        ->LeftJoin('flash_sale','flash_sale.products_id', '=', 'products.products_id')  
+        ->LeftJoin('specials', 'specials.products_id', '=', 'products.products_id')
+        ->LeftJoin('image_categories', function ($join)
+            
+        {
+            $join->on('image_categories.image_id', '=', 'products.products_image')->where(function ($query)
+            {
+                $query->where('image_categories.image_type', '=', 'THUMBNAIL')
+                ->where('image_categories.image_type', '=', 'THUMBNAIL')
+                ->orWhere('image_categories.image_type', '=', 'THUMBNAIL');
+            });
+        })
+        
+        ->where('products_description.language_id', '=', 1)
+        ->where('products.products_status', '=', 1)
+        ->where('products.parent_products_id', '=', null)
+        
+
+        ->select( 'products.products_id as products_products_id',
+            'bundles_products.product_id as product_in_bundles',
+            'products.*', 
+            'products_description.*', 
+            'products_description.products_id as products_description_products_id',
+            'images.name as image_of_product',
+            'image_categories.path as path','flash_sale.*',
+            'flash_sale.products_id as flash_sale_products_id',
+            DB::raw( '0 as flash_sale_timer_duration'),
+            DB::raw( '0 as flash_sale_timer_status'),
+            'specials.*',DB::raw('0 as special_discount_price_status'),
+            'specials.products_id as specials_products_id',
+            'specials.status as specials_status',
+            'sub_products.products_id  as product_variation_id',
+            'sub_products.products_weight  as product_variation_weight',
+            'sub_products.products_weight_unit  as product_variation_unit')
+         // ->orderBy('products_products_id', 'DESC')
+         // ->take(20)  
+          ->groupBy('products_products_id')
+        ->get();
+        
+
+        $nowTime = date("Y-m-d H:i:s", time());
+        
+        for ($i=0; $i < count($products) ; $i++) {
+            $expiry  = date("Y-m-d H:i:s", $products[$i]->expires_date);
+            $flash_expires_date  = date("Y-m-d H:i:s",  $products[$i]->flash_expires_date);
+            
+            $flash_start_date  = date("Y-m-d H:i:s",  $products[$i]->flash_start_date);
+
+            
+            
+            if($products[$i]->specials_id != null && $expiry > $nowTime && $products[$i]->specials_status == 1){
+                
+                $products[$i]->special_discount_price_status = 1; 
+            }
+
+            if($products[$i]->flash_sale_id != null && $flash_expires_date > $nowTime &&  $products[$i]->flash_status == 1){
+                
+                
+                $dtDiff = $products[$i]->flash_expires_date - time();
+                $totalDays = intval($dtDiff/(24*60*60));
+                $totalHours = $totalDays * 24;
+                
+                $products[$i]->flash_sale_timer_status = 1; 
+                $products[$i]->flash_sale_timer_duration = $totalHours; 
+            }
+        }
+        
+        return response()->json(['brand_products' => $products]);
+  }
+  
+  
+  
+  
+  public function app_banners(){
+           
+    
+          
+    $data = [];
+    $data['pageTitle'] = 'Menubar'; 
+
+    $data['list'] = DB::table('app_menus')
+    ->select('app_menus.*', 'app_menus_langs.title')
+    ->leftJoin('app_menus_langs', 'app_menus_langs.app_menu_id', '=', 'app_menus.id')    
+    ->where('app_menus_langs.language_id', 1)
+    ->orderBy('app_menus.id', 'ASC')
+    ->get();
+
+    //$result['commonContent'] = $this->Setting->commonContent();
+    
+    //return view("admin.app_menus.index", $data)->with('result', $result);
+    return response()->json($data);
+  
+  }
+  
+public function recomendedproducts(Request $request)
+    {
+
+  
+        $categories = DB::table('categories')   
+        ->where('categories.parent_id', '=', $request->parent_id)
+        ->where('categories.categories_status', '=', 1)
+        ->select('categories.*')
+        ->get();
+  
+        if($categories->count() > 0){
+            $cat_ids = [];
+            foreach ($categories as $categorie)
+            {
+                $cat_ids[] = $categorie->categories_id;
+            }
+        }
+  
+  
+        $products = DB::table('products_to_categories')->whereIn('categories_id', $cat_ids)
+        ->join('products', 'products.products_id', '=', 'products_to_categories.products_id')
+        ->LeftJoin('bundles_products', 'bundles_products.product_id', '=', 'products.products_id')
+        ->LeftJoin('products_description', 'products_description.products_id', '=', 'products.products_id')
+        ->LeftJoin('products as sub_products', 'sub_products.parent_products_id', '=', 'products.products_id')
+        ->LeftJoin('images', 'images.id', '=', 'products.products_image')
+        ->LeftJoin('flash_sale','flash_sale.products_id', '=', 'products.products_id')  
+        ->LeftJoin('specials', 'specials.products_id', '=', 'products.products_id')
+        ->LeftJoin('image_categories', function ($join)
+            
+        {
+            $join->on('image_categories.image_id', '=', 'products.products_image')->where(function ($query)
+            {
+                $query->where('image_categories.image_type', '=', 'THUMBNAIL')
+                ->where('image_categories.image_type', '=', 'THUMBNAIL')
+                ->orWhere('image_categories.image_type', '=', 'THUMBNAIL');
+            });
+        })
+        
+        ->where('products_description.language_id', '=', 1)
+        ->where('products.products_status', '=', 1)
+        ->where('products.parent_products_id', '=', null)
+        ->where('products.is_feature', '=', 1)
+
+        
+
+        ->select( 'products.products_id as products_products_id',
+            'bundles_products.product_id as product_in_bundles',
+            'products.*', 
+            'products_description.*', 
+            'products_description.products_id as products_description_products_id',
+            'images.name as image_of_product',
+            'image_categories.path as path','flash_sale.*',
+            'flash_sale.products_id as flash_sale_products_id',
+            DB::raw( '0 as flash_sale_timer_duration'),
+            DB::raw( '0 as flash_sale_timer_status'),
+            'specials.*',DB::raw('0 as special_discount_price_status'),
+            'specials.products_id as specials_products_id',
+            'specials.status as specials_status',
+            'sub_products.products_id  as product_variation_id',
+            'sub_products.products_weight  as product_variation_weight',
+            'sub_products.products_weight_unit  as product_variation_unit'
+        )
+         // ->orderBy('products_products_id', 'DESC')
+         // ->take(20)  
+          ->groupBy('products_products_id')
+        ->get();
+        
+
+        $nowTime = date("Y-m-d H:i:s", time());
+        
+        for ($i=0; $i < count($products) ; $i++) {
+            $expiry  = date("Y-m-d H:i:s", $products[$i]->expires_date);
+            $flash_expires_date  = date("Y-m-d H:i:s",  $products[$i]->flash_expires_date);
+            
+            $flash_start_date  = date("Y-m-d H:i:s",  $products[$i]->flash_start_date);
+
+            
+            
+            if($products[$i]->specials_id != null && $expiry > $nowTime && $products[$i]->specials_status == 1){
+                
+                $products[$i]->special_discount_price_status = 1; 
+            }
+
+            if($products[$i]->flash_sale_id != null && $flash_expires_date > $nowTime &&  $products[$i]->flash_status == 1){
+                
+                
+                $dtDiff = $products[$i]->flash_expires_date - time();
+                $totalDays = intval($dtDiff/(24*60*60));
+                $totalHours = $totalDays * 24;
+                
+                $products[$i]->flash_sale_timer_status = 1; 
+                $products[$i]->flash_sale_timer_duration = $totalHours; 
+            }
+        }
+        
+        return response()->json(['category_products' => $products]);
+        
+    } 
+     public function bundle_products(Request $request)
+    {
+
+        $products = DB::table('bundles_products')
+      ->join('products', 'products.products_id', '=', 'bundles_products.product_id')
+    //   ->LeftJoin('bundles_products', 'bundles_products.product_id', '=', 'products.products_id')
+        ->LeftJoin('products_description', 'products_description.products_id', '=', 'products.products_id')
+        ->LeftJoin('products as sub_products', 'sub_products.parent_products_id', '=', 'products.products_id')
+        ->LeftJoin('images', 'images.id', '=', 'products.products_image')
+        ->LeftJoin('flash_sale','flash_sale.products_id', '=', 'products.products_id')  
+        ->LeftJoin('specials', 'specials.products_id', '=', 'products.products_id')
+        ->LeftJoin('image_categories', function ($join)
+            
+        {
+            $join->on('image_categories.image_id', '=', 'products.products_image')->where(function ($query)
+            {
+                $query->where('image_categories.image_type', '=', 'THUMBNAIL')
+                ->where('image_categories.image_type', '=', 'THUMBNAIL')
+                ->orWhere('image_categories.image_type', '=', 'THUMBNAIL');
+            });
+        })
+        
+        
+         ->where('bundles_products.bundle_id', '=', $request->bundle_id)
+        ->where('products.products_status', '=', 1)
+        ->where('products.parent_products_id', '=', null)
+          ->where('products_description.language_id', '=', 1)
+        
+
+        // ->select( 'products.products_id as products_products_id',
+        //          'products.*', 'products_description.*',
+             
+
+
+        // )
+               ->select( 'products.products_id as products_products_id',
+                'bundles_products.product_id as product_in_bundles',
+                 'products.*', 
+            'products_description.*', 
+            'products_description.products_id as products_description_products_id',
+            'images.name as image_of_product',
+            'image_categories.path as path','flash_sale.*',
+            'flash_sale.products_id as flash_sale_products_id',
+            DB::raw( '0 as flash_sale_timer_duration'),
+            DB::raw( '0 as flash_sale_timer_status'),
+            'specials.*',DB::raw('0 as special_discount_price_status'),
+            'specials.products_id as specials_products_id',
+            'specials.status as specials_status',
+            'sub_products.products_id  as product_variation_id',
+           'sub_products.products_weight  as product_variation_weight',
+            'sub_products.products_weight_unit  as product_variation_unit'
+        )
+          ->groupBy('products_products_id')
+        
+        ->get();
+        
+
+        $nowTime = date("Y-m-d H:i:s", time());
+        
+        for ($i=0; $i < count($products) ; $i++) {
+            $expiry  = date("Y-m-d H:i:s", $products[$i]->expires_date);
+            $flash_expires_date  = date("Y-m-d H:i:s",  $products[$i]->flash_expires_date);
+            
+            $flash_start_date  = date("Y-m-d H:i:s",  $products[$i]->flash_start_date);
+
+            
+            
+            if($products[$i]->specials_id != null && $expiry > $nowTime && $products[$i]->specials_status == 1){
+                
+                $products[$i]->special_discount_price_status = 1; 
+            }
+
+            if($products[$i]->flash_sale_id != null && $flash_expires_date > $nowTime &&  $products[$i]->flash_status == 1){
+                
+                
+                $dtDiff = $products[$i]->flash_expires_date - time();
+                $totalDays = intval($dtDiff/(24*60*60));
+                $totalHours = $totalDays * 24;
+                
+                $products[$i]->flash_sale_timer_status = 1; 
+                $products[$i]->flash_sale_timer_duration = $totalHours; 
+            }
+        }
+        
+        return response()->json(['bundle_products' => $products]);
+        
+    } 
+  
+  public function bundles(Request $request){
+  
+       $bundles = DB::table('bundles')
+
+         ->join('images', 'images.id', '=', 'bundles.bg_image_id')
+
+        ->join('bundles_info', 'bundles_info.bundle_id', '=', 'bundles.id')
+
+        ->where('bundles_info.language_id', '=', 1)
+        ->select('bundles.*', 'images.name as bg_img_bundle', 'bundles_info.bundle_title', 'bundles_info.bundle_tos')
+        ->get();
+
+        return response()
+        ->json(['product_bundles' => $bundles]);
+  
+  
+  
+  }
+  
+
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+    public function testing(Request $request)
+    {
+
+        $products = DB::table('products')
+        ->LeftJoin('bundles_products', 'bundles_products.product_id', '=', 'products.products_id')
+        ->LeftJoin('products_description', 'products_description.products_id', '=', 'products.products_id')
+        ->LeftJoin('products as sub_products', 'sub_products.parent_products_id', '=', 'products.products_id')
+        ->LeftJoin('images', 'images.id', '=', 'products.products_image')
+        ->LeftJoin('flash_sale','flash_sale.products_id', '=', 'products.products_id')  
+        ->LeftJoin('specials', 'specials.products_id', '=', 'products.products_id')
+        ->LeftJoin('image_categories', function ($join)
+            
+        {
+            $join->on('image_categories.image_id', '=', 'products.products_image')->where(function ($query)
+            {
+                $query->where('image_categories.image_type', '=', 'THUMBNAIL')
+                ->where('image_categories.image_type', '=', 'THUMBNAIL')
+                ->orWhere('image_categories.image_type', '=', 'THUMBNAIL');
+            });
+        })
+        
+        ->where('products_description.language_id', '=', 1)
+        ->where('products.products_status', '=', 1)
+        
+        ->where('products.parent_products_id', '=', null)
+         // ->where('flash_sale.flash_status', '!=', 0)
+         ->orderBy('products.products_id', 'ASC')
+        
+
+        ->select( 'products.products_id as products_products_id',
+
+            'bundles_products.product_id as product_in_bundles',
+            'products.*', 
+            'products_description.*', 
+            'products_description.products_id as products_description_products_id',
+            'images.name as image_of_product',
+            'image_categories.path as path','flash_sale.*',
+            'flash_sale.products_id as flash_sale_products_id',
+            DB::raw( '0 as flash_sale_timer_duration'),
+            DB::raw( '0 as flash_sale_timer_status'),
+            'specials.*',DB::raw('0 as special_discount_price_status'),
+            'specials.products_id as specials_products_id',
+            'specials.status as specials_status',
+            'sub_products.products_id  as product_variation_id',
+            'sub_products.products_weight  as product_variation_weight',
+            'sub_products.products_weight_unit  as product_variation_unit'
+        )
+         // ->orderBy('products_products_id', 'DESC')
+          ->groupBy('products_products_id')
+          
+        ->get();
+        
+
+        $nowTime = date("Y-m-d H:i:s", time());
+        
+        for ($i=0; $i < count($products) ; $i++) {
+            $expiry  = date("Y-m-d H:i:s", $products[$i]->expires_date);
+            $flash_expires_date  = date("Y-m-d H:i:s",  $products[$i]->flash_expires_date);
+            
+            $flash_start_date  = date("Y-m-d H:i:s",  $products[$i]->flash_start_date);
+
+            
+            
+            if($products[$i]->specials_id != null && $expiry > $nowTime && $products[$i]->specials_status == 1){
+                
+                $products[$i]->special_discount_price_status = 1; 
+            }
+
+            if($products[$i]->flash_sale_id != null && $flash_expires_date > $nowTime &&  $products[$i]->flash_status == 1){
+                
+                
+                $dtDiff = $products[$i]->flash_expires_date - time();
+                $totalDays = intval($dtDiff/(24*60*60));
+                $totalHours = $totalDays * 24;
+                
+                $products[$i]->flash_sale_timer_status = 1; 
+                $products[$i]->flash_sale_timer_duration = $totalHours; 
+            }
+        }
+        
+        return response()->json(['test' => $products]);
+        
+    }
+    
+    public function testing_products_variations(Request $request)
+    {
+
+        $products = DB::table('products')
+        ->LeftJoin('bundles_products', 'bundles_products.product_id', '=', 'products.products_id')
+        ->LeftJoin('products_description', 'products_description.products_id', '=', 'products.products_id')
+        ->LeftJoin('images', 'images.id', '=', 'products.products_image')
+        ->LeftJoin('flash_sale','flash_sale.products_id', '=', 'products.products_id')  
+        ->LeftJoin('specials', 'specials.products_id', '=', 'products.products_id')
+        ->LeftJoin('image_categories', function ($join)
+            
+        {
+            $join->on('image_categories.image_id', '=', 'products.products_image')->where(function ($query)
+            {
+                $query->where('image_categories.image_type', '=', 'THUMBNAIL')
+                ->where('image_categories.image_type', '=', 'THUMBNAIL')
+                ->orWhere('image_categories.image_type', '=', 'THUMBNAIL');
+            });
+        })  
+        ->where('products.parent_products_id','=',$request->product_parent_id)
+        ->where('products_description.language_id', '=', 1)
+        ->where('products.products_status', '=', 1)
+        ->where('products.products_status', '=', 1)
+
+        
+
+        ->select( 'products.products_id as products_products_id',
+            'bundles_products.product_id as product_in_bundles',
+            'products.*', 
+            'products_description.*', 
+            'products_description.products_id as products_description_products_id',
+            'images.name as image_of_product',
+            'image_categories.path as path','flash_sale.*',
+            'flash_sale.products_id as flash_sale_products_id',
+            DB::raw( '0 as flash_sale_timer_duration'),
+            DB::raw( '0 as flash_sale_timer_status'),
+            'specials.*',DB::raw('0 as special_discount_price_status'),
+            'specials.products_id as specials_products_id',
+            'specials.status as specials_status'
+        )  
+        ->get();
+        
+
+        $nowTime = date("Y-m-d H:i:s", time());
+        
+        for ($i=0; $i < count($products) ; $i++) {
+            $expiry  = date("Y-m-d H:i:s", $products[$i]->expires_date);
+            $flash_expires_date  = date("Y-m-d H:i:s",  $products[$i]->flash_expires_date);
+            
+            $flash_start_date  = date("Y-m-d H:i:s",  $products[$i]->flash_start_date);
+
+            
+            
+            if($products[$i]->specials_id != null && $expiry > $nowTime && $products[$i]->specials_status == 1){
+                
+                $products[$i]->special_discount_price_status = 1; 
+            }
+
+            if($products[$i]->flash_sale_id != null && $flash_expires_date > $nowTime &&  $products[$i]->flash_status == 1){
+                
+                
+                $dtDiff = $products[$i]->flash_expires_date - time();
+                $totalDays = intval($dtDiff/(24*60*60));
+                $totalHours = $totalDays * 24;
+                
+                $products[$i]->flash_sale_timer_status = 1; 
+                $products[$i]->flash_sale_timer_duration = $totalHours; 
+            }
+        }
+        
+        return response()->json(['testing_products_variations' => $products]);
+        
+    }
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    public function recomended(Request $request){
+        
+        $categories = DB::table('categories')   
+        ->where('categories.parent_id', '=', $request->parent_id)
+        ->where('categories.categories_status', '=', 1)
+        ->select('categories.*')
+        ->get();
+        if($categories->count() > 0){
+            $cat_ids = [];
+            foreach ($categories as $categorie)
+            {
+                $cat_ids[] = $categorie->categories_id;
+            }
+            
+
+            
+            $products = DB::table('products_to_categories')->whereIn('categories_id', $cat_ids)
+            ->join('products', 'products.products_id', '=', 'products_to_categories.products_id')
+            ->join('products_description', 'products_description.products_id', '=', 'products_to_categories.products_id') 
+            ->LeftJoin('image_categories', function ($join)
+            {
+                $join->on('image_categories.image_id', '=', 'products.products_image')->where(function ($query)
+                {
+                    $query->where('image_categories.image_type', '=', 'THUMBNAIL')
+                    ->where('image_categories.image_type', '=', 'THUMBNAIL')
+                    ->orWhere('image_categories.image_type', '=', 'THUMBNAIL');
+                });
+            })
+            
+            ->where('products_description.language_id', '=', 1)
+            ->where('products.products_status', '=', 1)
+            ->where('products.is_feature', '=', 1)
+
+            ->select('products.*', 'products_description.*', 'image_categories.path as path')
+            ->get();
+            
+            return response()
+            ->json(['message'=>'Recomended Products', 'recomended' => $products]);
+        }else{
+            return response()
+            ->json(['message'=>'This category does not any sub category']);
+        }
+        
+    }
+
+
+    public function recentproducts_old(Request $request)
+    {
+
+        $products = DB::table('products')
+        ->join('products_description', 'products_description.products_id', '=', 'products.products_id')
+        ->join('images', 'images.id', '=', 'products.products_image')
+        ->LeftJoin('image_categories', function ($join)
+        { 
+            $join->on('image_categories.image_id', '=', 'products.products_image')->where(function ($query)
+            {
+                $query->where('image_categories.image_type', '=', 'THUMBNAIL')
+                ->where('image_categories.image_type', '=', 'THUMBNAIL')
+                ->orWhere('image_categories.image_type', '=', 'THUMBNAIL');
+            });
+        })
+        ->where('products_description.language_id', '=', 1)
+        ->where('products.products_status', '=', 1)
+        ->orderBy('products.created_at', 'DESC')
+
+        ->select('products_description.*', 'products.*', 'images.name as image_of_product', 'image_categories.path as path')
+        ->get();
+
+        return response()
+        ->json(['message' => 'Recently added', 'recently added' => $products]);
+    }
+  
+  
+    public function recentproducts(Request $request)
+    {
+
+        $products = DB::table('products')
+        ->LeftJoin('bundles_products', 'bundles_products.product_id', '=', 'products.products_id')
+        ->LeftJoin('products_description', 'products_description.products_id', '=', 'products.products_id')
+        ->LeftJoin('products as sub_products', 'sub_products.parent_products_id', '=', 'products.products_id')
+        ->LeftJoin('images', 'images.id', '=', 'products.products_image')
+        ->LeftJoin('flash_sale','flash_sale.products_id', '=', 'products.products_id')  
+        ->LeftJoin('specials', 'specials.products_id', '=', 'products.products_id')
+        ->LeftJoin('image_categories', function ($join)
+            
+        {
+            $join->on('image_categories.image_id', '=', 'products.products_image')->where(function ($query)
+            {
+                $query->where('image_categories.image_type', '=', 'THUMBNAIL')
+                ->where('image_categories.image_type', '=', 'THUMBNAIL')
+                ->orWhere('image_categories.image_type', '=', 'THUMBNAIL');
+            });
+        })
+        
+        ->where('products_description.language_id', '=', 1)
+        ->where('products.products_status', '=', 1)
+        ->where('products.products_status', '=', 1)
+        ->where('products.parent_products_id', '=', null)
+         ->orderBy('products.products_id', 'DESC')
+        
+
+        ->select( 'products.products_id as products_products_id',
+'bundles_products.product_id as product_in_bundles',
+            'products.*', 
+            'products_description.*', 
+            'products_description.products_id as products_description_products_id',
+            'images.name as image_of_product',
+            'image_categories.path as path','flash_sale.*',
+            'flash_sale.products_id as flash_sale_products_id',
+            DB::raw( '0 as flash_sale_timer_duration'),
+            DB::raw( '0 as flash_sale_timer_status'),
+            'specials.*',DB::raw('0 as special_discount_price_status'),
+            'specials.products_id as specials_products_id',
+            'specials.status as specials_status',
+            'sub_products.products_id  as product_variation_id',
+            'sub_products.products_weight  as product_variation_weight',
+            'sub_products.products_weight_unit  as product_variation_unit'
+        )
+         // ->orderBy('products_products_id', 'DESC')
+         // ->take(20)  
+          ->groupBy('products_products_id')
+        ->get();
+        
+
+        $nowTime = date("Y-m-d H:i:s", time());
+        
+        for ($i=0; $i < count($products) ; $i++) {
+            $expiry  = date("Y-m-d H:i:s", $products[$i]->expires_date);
+            $flash_expires_date  = date("Y-m-d H:i:s",  $products[$i]->flash_expires_date);
+            
+            $flash_start_date  = date("Y-m-d H:i:s",  $products[$i]->flash_start_date);
+
+            
+            
+            if($products[$i]->specials_id != null && $expiry > $nowTime && $products[$i]->specials_status == 1){
+                
+                $products[$i]->special_discount_price_status = 1; 
+            }
+
+            if($products[$i]->flash_sale_id != null && $flash_expires_date > $nowTime &&  $products[$i]->flash_status == 1){
+                
+                
+                $dtDiff = $products[$i]->flash_expires_date - time();
+                $totalDays = intval($dtDiff/(24*60*60));
+                $totalHours = $totalDays * 24;
+                
+                $products[$i]->flash_sale_timer_status = 1; 
+                $products[$i]->flash_sale_timer_duration = $totalHours; 
+            }
+        }
+        
+        return response()->json(['message' => 'Recently added', 'recently added' =>  $products]);
+        
+    }
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+
+    public function flashsaleproducts_old(Request $request)
+    {
+
+        $products = DB::table('flash_sale')
+
+        ->join('products', 'products.products_id', '=', 'flash_sale.products_id')
+        ->join('products_description', 'products_description.products_id', '=', 'products.products_id')
+        ->join('images', 'images.id', '=', 'products.products_image')
+        ->LeftJoin('image_categories', function ($join)
+        { 
+            $join->on('image_categories.image_id', '=', 'products.products_image')->where(function ($query)
+            {
+                $query->where('image_categories.image_type', '=', 'THUMBNAIL')
+                ->where('image_categories.image_type', '=', 'THUMBNAIL')
+                ->orWhere('image_categories.image_type', '=', 'THUMBNAIL');
+            });
+        })
+        ->where('products_description.language_id', '=', 1)
+        ->where('products.products_status', '=', 1)
+        ->where('flash_sale.flash_status', '=', 1)
+
+        ->select('products_description.*', 'products.*', 'images.name as image_of_product', 'flash_sale.*',  'image_categories.path as path')
+        ->get();
+
+        return response()
+        ->json(['message' => 'All flash sale products', 'flash_sale_products' => $products]);
+    }
+
+  
+  
+  
+  
+  
+    public function flashsaleproducts(Request $request)
+    {
+
+        
+        $products = DB::table('flash_sale')
+        ->LeftJoin('products', 'products.products_id', '=', 'flash_sale.products_id')
+        ->LeftJoin('bundles_products', 'bundles_products.product_id', '=', 'products.products_id')
+        ->LeftJoin('products_description', 'products_description.products_id', '=', 'products.products_id')
+        ->LeftJoin('products as sub_products', 'sub_products.parent_products_id', '=', 'products.products_id')
+        ->LeftJoin('images', 'images.id', '=', 'products.products_image')
+        
+        ->LeftJoin('specials', 'specials.products_id', '=', 'products.products_id')
+        ->LeftJoin('image_categories', function ($join)
+            
+        {
+            $join->on('image_categories.image_id', '=', 'products.products_image')->where(function ($query)
+            {
+                $query->where('image_categories.image_type', '=', 'THUMBNAIL')
+                ->where('image_categories.image_type', '=', 'THUMBNAIL')
+                ->orWhere('image_categories.image_type', '=', 'THUMBNAIL');
+            });
+        })
+        
+        ->where('products_description.language_id', '=', 1)
+        ->where('products.products_status', '=', 1)
+          ->where('flash_sale.flash_status', '=', 1)
+        ->where('products.parent_products_id', '=', null)
+
+        
+
+        ->select( 'products.products_id as products_products_id',
+            'bundles_products.product_id as product_in_bundles',
+            'products.*', 
+            'products_description.*', 
+            'products_description.products_id as products_description_products_id',
+            'images.name as image_of_product',
+            'image_categories.path as path','flash_sale.*',
+            'flash_sale.products_id as flash_sale_products_id',
+            DB::raw( '0 as flash_sale_timer_duration'),
+            DB::raw( '0 as flash_sale_timer_status'),
+            'specials.*',DB::raw('0 as special_discount_price_status'),
+            'specials.products_id as specials_products_id',
+            'specials.status as specials_status',
+            'sub_products.products_id  as product_variation_id',
+            'sub_products.products_weight  as product_variation_weight',
+            'sub_products.products_weight_unit  as product_variation_unit'
+        )
+         ->orderBy('products_products_id', 'DESC')
+         // ->take(20)  
+          ->groupBy('products_products_id')
+        ->get();
+        
+
+        $nowTime = date("Y-m-d H:i:s", time());
+        
+        for ($i=0; $i < count($products) ; $i++) {
+            $expiry  = date("Y-m-d H:i:s", $products[$i]->expires_date);
+            $flash_expires_date  = date("Y-m-d H:i:s",  $products[$i]->flash_expires_date);
+            
+            $flash_start_date  = date("Y-m-d H:i:s",  $products[$i]->flash_start_date);
+
+            
+            
+            if($products[$i]->specials_id != null && $expiry > $nowTime && $products[$i]->specials_status == 1){
+                
+                $products[$i]->special_discount_price_status = 1; 
+            }
+
+            if($products[$i]->flash_sale_id != null && $flash_expires_date > $nowTime &&  $products[$i]->flash_status == 1){
+                
+                
+                $dtDiff = $products[$i]->flash_expires_date - time();
+                $totalDays = intval($dtDiff/(24*60*60));
+                $totalHours = $totalDays * 24;
+                
+                $products[$i]->flash_sale_timer_status = 1; 
+                $products[$i]->flash_sale_timer_duration = $totalHours; 
+            }
+        }
+        
+        return response()->json(['message' => 'All flash sale products', 'flash_sale_products' => $products]);
+        
+    }
+  
+  
+  
+  
+  
+  
+  
+  
+    public function exclusiveproducts_old(Request $request)
+    {
+
+        $products = DB::table('products')
+        ->join('products_description', 'products_description.products_id', '=', 'products.products_id')
+        ->join('images', 'images.id', '=', 'products.products_image')
+        ->LeftJoin('image_categories', function ($join)
+        { 
+            $join->on('image_categories.image_id', '=', 'products.products_image')->where(function ($query)
+            {
+                $query->where('image_categories.image_type', '=', 'THUMBNAIL')
+                ->where('image_categories.image_type', '=', 'THUMBNAIL')
+                ->orWhere('image_categories.image_type', '=', 'THUMBNAIL');
+            });
+        })
+        ->where('products.products_price_market', '=', 0)
+        ->orwhere('products.products_price_market', '=', null)
+        ->where('products.products_status', '=', 1)
+        ->where('products_description.language_id', '=', 1)
+        ->select('products_description.*', 'products.*', 'images.name as image_of_product', 'image_categories.path as path')
+        ->get();
+
+        return response()
+        ->json(['exclusive_products' => $products]);
+    }
+
+  
+        public function exclusiveproducts(Request $request)
+    {
+
+        $products = DB::table('products')
+        ->LeftJoin('products_description', 'products_description.products_id', '=', 'products.products_id')
+        ->LeftJoin('bundles_products', 'bundles_products.product_id', '=', 'products.products_id')
+        ->LeftJoin('products as sub_products', 'sub_products.parent_products_id', '=', 'products.products_id')
+        ->LeftJoin('images', 'images.id', '=', 'products.products_image')
+        ->LeftJoin('flash_sale','flash_sale.products_id', '=', 'products.products_id')  
+        ->LeftJoin('specials', 'specials.products_id', '=', 'products.products_id')
+        ->LeftJoin('image_categories', function ($join)
+            
+        {
+            $join->on('image_categories.image_id', '=', 'products.products_image')->where(function ($query)
+            {
+                $query->where('image_categories.image_type', '=', 'THUMBNAIL')
+                ->where('image_categories.image_type', '=', 'THUMBNAIL')
+                ->orWhere('image_categories.image_type', '=', 'THUMBNAIL');
+            });
+        })
+        
+         ->where('products.products_price_market', '=', 0)
+        ->where('products_description.language_id', '=', 1)
+        ->where('products.products_status', '=', 1)
+        ->where('products.parent_products_id', '=', null)
+
+
+
+        ->select( 'products.products_id as products_products_id',
+            'bundles_products.product_id as product_in_bundles',
+            'products.*', 
+            'products_description.*', 
+            'products_description.products_id as products_description_products_id',
+            'images.name as image_of_product',
+            'image_categories.path as path','flash_sale.*',
+            'flash_sale.products_id as flash_sale_products_id',
+            DB::raw( '0 as flash_sale_timer_duration'),
+            DB::raw( '0 as flash_sale_timer_status'),
+            'specials.*',DB::raw('0 as special_discount_price_status'),
+            'specials.products_id as specials_products_id',
+            'specials.status as specials_status',
+            'sub_products.products_id  as product_variation_id',
+            'sub_products.products_weight  as product_variation_weight',
+            'sub_products.products_weight_unit  as product_variation_unit'
+        )
+         // ->orderBy('products_products_id', 'DESC')
+         // ->take(20)  
+          ->groupBy('products_products_id')
+        ->get();
+        
+
+        $nowTime = date("Y-m-d H:i:s", time());
+        
+        for ($i=0; $i < count($products) ; $i++) {
+            $expiry  = date("Y-m-d H:i:s", $products[$i]->expires_date);
+            $flash_expires_date  = date("Y-m-d H:i:s",  $products[$i]->flash_expires_date);
+            
+            $flash_start_date  = date("Y-m-d H:i:s",  $products[$i]->flash_start_date);
+
+            
+            
+            if($products[$i]->specials_id != null && $expiry > $nowTime && $products[$i]->specials_status == 1){
+                
+                $products[$i]->special_discount_price_status = 1; 
+            }
+
+            if($products[$i]->flash_sale_id != null && $flash_expires_date > $nowTime &&  $products[$i]->flash_status == 1){
+                
+                
+                $dtDiff = $products[$i]->flash_expires_date - time();
+                $totalDays = intval($dtDiff/(24*60*60));
+                $totalHours = $totalDays * 24;
+                
+                $products[$i]->flash_sale_timer_status = 1; 
+                $products[$i]->flash_sale_timer_duration = $totalHours; 
+            }
+        }
+        
+        return response()->json(['exclusive_products' => $products]);
+        
+    }
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+    public function products_points_redeem_old(Request $request)
+    {
+
+        $products = DB::table('products')
+        ->join('products_description', 'products_description.products_id', '=', 'products.products_id')
+        ->join('images', 'images.id', '=', 'products.products_image')
+        ->LeftJoin('image_categories', function ($join)
+        { 
+            $join->on('image_categories.image_id', '=', 'products.products_image')->where(function ($query)
+            {
+                $query->where('image_categories.image_type', '=', 'THUMBNAIL')
+                ->where('image_categories.image_type', '=', 'THUMBNAIL')
+                ->orWhere('image_categories.image_type', '=', 'THUMBNAIL');
+            });
+        })
+        ->where('products.products_points_redeem', '!=', null)
+        ->where('products_description.language_id', '=', 1)
+        ->where('products.products_status', '=', 1)
+        ->select('products_description.*', 'products.*', 'images.name as image_of_product','image_categories.path as path')
+        ->get();
+
+        return response()
+        ->json(['redeem_products' => $products]);
+    }
+  
+  
+    public function products_points_redeem(Request $request)
+    {
+
+        $products = DB::table('products')
+        ->LeftJoin('bundles_products', 'bundles_products.product_id', '=', 'products.products_id')
+        ->LeftJoin('products_description', 'products_description.products_id', '=', 'products.products_id')
+        ->LeftJoin('products as sub_products', 'sub_products.parent_products_id', '=', 'products.products_id')
+        ->LeftJoin('images', 'images.id', '=', 'products.products_image')
+        ->LeftJoin('flash_sale','flash_sale.products_id', '=', 'products.products_id')  
+        ->LeftJoin('specials', 'specials.products_id', '=', 'products.products_id')
+        ->LeftJoin('image_categories', function ($join)
+            
+        {
+            $join->on('image_categories.image_id', '=', 'products.products_image')->where(function ($query)
+            {
+                $query->where('image_categories.image_type', '=', 'THUMBNAIL')
+                ->where('image_categories.image_type', '=', 'THUMBNAIL')
+                ->orWhere('image_categories.image_type', '=', 'THUMBNAIL');
+            });
+        })
+        
+        ->where('products.products_points_redeem', '!=', null)
+        ->where('products_description.language_id', '=', 1)
+        ->where('products.products_status', '=', 1)
+        ->where('products.parent_products_id', '=', null)
+
+
+
+        ->select( 'products.products_id as products_products_id',
+            'bundles_products.product_id as product_in_bundles',
+            'products.*', 
+            'products_description.*', 
+            'products_description.products_id as products_description_products_id',
+            'images.name as image_of_product',
+            'image_categories.path as path','flash_sale.*',
+            'flash_sale.products_id as flash_sale_products_id',
+            DB::raw( '0 as flash_sale_timer_duration'),
+            DB::raw( '0 as flash_sale_timer_status'),
+            'specials.*',DB::raw('0 as special_discount_price_status'),
+            'specials.products_id as specials_products_id',
+            'specials.status as specials_status',
+            'sub_products.products_id  as product_variation_id',
+            'sub_products.products_weight  as product_variation_weight',
+            'sub_products.products_weight_unit  as product_variation_unit'
+        )
+         // ->orderBy('products_products_id', 'DESC')
+         // ->take(20)  
+          ->groupBy('products_products_id')
+        ->get();
+        
+
+        $nowTime = date("Y-m-d H:i:s", time());
+        
+        for ($i=0; $i < count($products) ; $i++) {
+            $expiry  = date("Y-m-d H:i:s", $products[$i]->expires_date);
+            $flash_expires_date  = date("Y-m-d H:i:s",  $products[$i]->flash_expires_date);
+            
+            $flash_start_date  = date("Y-m-d H:i:s",  $products[$i]->flash_start_date);
+
+            
+            
+            if($products[$i]->specials_id != null && $expiry > $nowTime && $products[$i]->specials_status == 1){
+                
+                $products[$i]->special_discount_price_status = 1; 
+            }
+
+            if($products[$i]->flash_sale_id != null && $flash_expires_date > $nowTime &&  $products[$i]->flash_status == 1){
+                
+                
+                $dtDiff = $products[$i]->flash_expires_date - time();
+                $totalDays = intval($dtDiff/(24*60*60));
+                $totalHours = $totalDays * 24;
+                
+                $products[$i]->flash_sale_timer_status = 1; 
+                $products[$i]->flash_sale_timer_duration = $totalHours; 
+            }
+        }
+        
+        return response()->json(['redeem_products' => $products]);
+        
+    }
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+
+    public function featuredproducts_old(Request $request)
+    {
+
+        $products = DB::table('products')
+        ->join('products_description', 'products_description.products_id', '=', 'products.products_id')
+        ->join('images', 'images.id', '=', 'products.products_image')
+        ->LeftJoin('image_categories', function ($join)
+        { 
+            $join->on('image_categories.image_id', '=', 'products.products_image')->where(function ($query)
+            {
+                $query->where('image_categories.image_type', '=', 'THUMBNAIL')
+                ->where('image_categories.image_type', '=', 'THUMBNAIL')
+                ->orWhere('image_categories.image_type', '=', 'THUMBNAIL');
+            });
+        })
+        ->where('products.is_feature', '!=', 0)
+        ->where('products_description.language_id', '=', 1)
+        ->where('products.products_status', '=', 1)
+        ->select('products_description.*', 'products.*', 'images.name as image_of_product', 'image_categories.path as path')
+        ->get();
+
+        return response()
+        ->json(['featured_products' => $products]);
+    }
+  
+  
+        public function featuredproducts(Request $request)
+    {
+
+        $products = DB::table('products')
+        ->LeftJoin('bundles_products', 'bundles_products.product_id', '=', 'products.products_id')
+        ->LeftJoin('products_description', 'products_description.products_id', '=', 'products.products_id')
+        ->LeftJoin('products as sub_products', 'sub_products.parent_products_id', '=', 'products.products_id')
+        ->LeftJoin('images', 'images.id', '=', 'products.products_image')
+        ->LeftJoin('flash_sale','flash_sale.products_id', '=', 'products.products_id')  
+        ->LeftJoin('specials', 'specials.products_id', '=', 'products.products_id')
+        ->LeftJoin('image_categories', function ($join)
+            
+        {
+            $join->on('image_categories.image_id', '=', 'products.products_image')->where(function ($query)
+            {
+                $query->where('image_categories.image_type', '=', 'THUMBNAIL')
+                ->where('image_categories.image_type', '=', 'THUMBNAIL')
+                ->orWhere('image_categories.image_type', '=', 'THUMBNAIL');
+            });
+        })
+        
+        ->where('products_description.language_id', '=', 1)
+        ->where('products.is_feature', '!=', 0)
+        ->where('products.products_status', '=', 1)
+        ->where('products.parent_products_id', '=', null)
+   
+        
+
+        ->select( 'products.products_id as products_products_id',
+            'bundles_products.product_id as product_in_bundles',
+            'products.*', 
+            'products_description.*', 
+            'products_description.products_id as products_description_products_id',
+            'images.name as image_of_product',
+            'image_categories.path as path','flash_sale.*',
+            'flash_sale.products_id as flash_sale_products_id',
+            DB::raw( '0 as flash_sale_timer_duration'),
+            DB::raw( '0 as flash_sale_timer_status'),
+            'specials.*',DB::raw('0 as special_discount_price_status'),
+            'specials.products_id as specials_products_id',
+            'specials.status as specials_status',
+            'sub_products.products_id  as product_variation_id',
+            'sub_products.products_weight  as product_variation_weight',
+            'sub_products.products_weight_unit  as product_variation_unit'
+        )
+         // ->orderBy('products_products_id', 'DESC')
+         // ->take(20)  
+          ->groupBy('products_products_id')
+        ->get();
+        
+
+        $nowTime = date("Y-m-d H:i:s", time());
+        
+        for ($i=0; $i < count($products) ; $i++) {
+            $expiry  = date("Y-m-d H:i:s", $products[$i]->expires_date);
+            $flash_expires_date  = date("Y-m-d H:i:s",  $products[$i]->flash_expires_date);
+            
+            $flash_start_date  = date("Y-m-d H:i:s",  $products[$i]->flash_start_date);
+
+            
+            
+            if($products[$i]->specials_id != null && $expiry > $nowTime && $products[$i]->specials_status == 1){
+                
+                $products[$i]->special_discount_price_status = 1; 
+            }
+
+            if($products[$i]->flash_sale_id != null && $flash_expires_date > $nowTime &&  $products[$i]->flash_status == 1){
+                
+                
+                $dtDiff = $products[$i]->flash_expires_date - time();
+                $totalDays = intval($dtDiff/(24*60*60));
+                $totalHours = $totalDays * 24;
+                
+                $products[$i]->flash_sale_timer_status = 1; 
+                $products[$i]->flash_sale_timer_duration = $totalHours; 
+            }
+        }
+        
+        return response()->json(['message' => 'featured_products', 'featured_products' =>  $products]);
+        
+    }
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+    public function specialproducts_old(Request $request)
+    {
+
+        $products = DB::table('specials')
+          ->join('products', 'products.products_id', '=', 'specials.products_id')
+        ->join('products_description', 'products_description.products_id', '=', 'products.products_id')
+        ->join('images', 'images.id', '=', 'products.products_image')
+        ->LeftJoin('image_categories', function ($join)
+        { 
+            $join->on('image_categories.image_id', '=', 'products.products_image')->where(function ($query)
+            {
+                $query->where('image_categories.image_type', '=', 'THUMBNAIL')
+                ->where('image_categories.image_type', '=', 'THUMBNAIL')
+                ->orWhere('image_categories.image_type', '=', 'THUMBNAIL');
+            });
+        })
+        ->where('products_description.language_id', '=', 1)
+        ->where('specials.status', '=', 1)
+        ->where('products.products_status', '=', 1)
+        ->select('products_description.*', 'products.*', 'images.name as image_of_product', 'specials.*','image_categories.path as path' )
+        ->get();
+
+        return response()
+        ->json(['message' => 'All Special products', 'special products' => $products]);
+    }
+
+  
+  
+  public function specialproducts(Request $request)
+    {
+
+        
+          $products = DB::table('specials')
+          ->join('products', 'products.products_id', '=', 'specials.products_id')
+          ->LeftJoin('bundles_products', 'bundles_products.product_id', '=', 'products.products_id')
+        ->LeftJoin('products_description', 'products_description.products_id', '=', 'products.products_id')
+        ->LeftJoin('products as sub_products', 'sub_products.parent_products_id', '=', 'products.products_id')
+        ->LeftJoin('images', 'images.id', '=', 'products.products_image')
+        ->LeftJoin('flash_sale','flash_sale.products_id', '=', 'products.products_id')  
+        //->LeftJoin('specials', 'specials.products_id', '=', 'products.products_id')
+        ->LeftJoin('image_categories', function ($join)
+            
+        {
+            $join->on('image_categories.image_id', '=', 'products.products_image')->where(function ($query)
+            {
+                $query->where('image_categories.image_type', '=', 'THUMBNAIL')
+                ->where('image_categories.image_type', '=', 'THUMBNAIL')
+                ->orWhere('image_categories.image_type', '=', 'THUMBNAIL');
+            });
+        })
+        
+        ->where('products_description.language_id', '=', 1)
+        ->where('products.products_status', '=', 1)
+        ->where('products.parent_products_id', '=', null)
+         ->where('specials.status', '=', 1)
+
+        
+
+        ->select( 'products.products_id as products_products_id',
+            'bundles_products.product_id as product_in_bundles',
+            'products.*', 
+            'products_description.*', 
+            'products_description.products_id as products_description_products_id',
+            'images.name as image_of_product',
+            'image_categories.path as path','flash_sale.*',
+            'flash_sale.products_id as flash_sale_products_id',
+            DB::raw( '0 as flash_sale_timer_duration'),
+            DB::raw( '0 as flash_sale_timer_status'),
+            'specials.*',DB::raw('0 as special_discount_price_status'),
+            'specials.products_id as specials_products_id',
+            'specials.status as specials_status',
+            'sub_products.products_id  as product_variation_id',
+            'sub_products.products_weight  as product_variation_weight',
+            'sub_products.products_weight_unit  as product_variation_unit'
+        )
+         // ->orderBy('products_products_id', 'DESC')
+         // ->take(20)  
+            ->groupBy('products_products_id')
+        ->get();
+        
+
+        $nowTime = date("Y-m-d H:i:s", time());
+        
+        for ($i=0; $i < count($products) ; $i++) {
+            $expiry  = date("Y-m-d H:i:s", $products[$i]->expires_date);
+            $flash_expires_date  = date("Y-m-d H:i:s",  $products[$i]->flash_expires_date);
+            
+            $flash_start_date  = date("Y-m-d H:i:s",  $products[$i]->flash_start_date);
+
+            
+            
+            if($products[$i]->specials_id != null && $expiry > $nowTime && $products[$i]->specials_status == 1){
+                
+                $products[$i]->special_discount_price_status = 1; 
+            }
+
+            if($products[$i]->flash_sale_id != null && $flash_expires_date > $nowTime &&  $products[$i]->flash_status == 1){
+                
+                
+                $dtDiff = $products[$i]->flash_expires_date - time();
+                $totalDays = intval($dtDiff/(24*60*60));
+                $totalHours = $totalDays * 24;
+                
+                $products[$i]->flash_sale_timer_status = 1; 
+                $products[$i]->flash_sale_timer_duration = $totalHours; 
+            }
+        }
+        
+        return response()->json(['message' => 'All Special products', 'special products' => $products]);
+        
+    }
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+
+    // add fav products
+    public function addfavproducts(Request $request)
+    {
+
+        $email = $request->email;
+        $product_id = $request->product_id;
+
+        $user = DB::table('users')->where('email', $email)->first();
+        $id = $user->id;
+        if (DB::table('liked_products')
+            ->where(['liked_products_id' => $product_id, 'liked_customers_id' => $id])->first())
+        {
+
+            return response()
+            ->json(['message' => 'Item is already in cart']);
+
+        }
+        else
+        {
+            $values = array(
+                'liked_products_id' => $product_id,
+                'liked_customers_id' => $id,
+                'date_liked' => now()
+            );
+            $values = DB::table('liked_products')->insert($values);
+
+            return response()->json(['message' => 'Added in favourite products']);
+        }
+    }
+
+    public function deletefavproducts(Request $request)
+    {
+
+        $email = $request->email;
+        $product_id = $request->product_id;
+
+        $user = DB::table('users')->where('email', $email)->first();
+        $id = $user->id;
+        $fav = DB::table('liked_products')->where(['liked_products_id' => $product_id, 'liked_customers_id' => $id]);
+
+        if ($fav)
+        {
+
+            $fav->delete();
+            return response()
+            ->json(['message' => 'product removed from fav list']);
+
+        }
+        else
+        {
+
+            return response()
+            ->json(['message' => 'item is not in fav list']);
+        }
+    }
+
+    public function getfavproducts(Request $request)
+    {
+
+        $email = $request->email;
+
+        $user = DB::table('users')->where('email', $email)->first();
+        $id = $user->id;
+
+        $values = DB::table('liked_products')->where('liked_customers_id', '=', $id)->get();
+
+        $pro = [];
+        foreach ($values as $val)
+        {
+            $pro[] = $val->liked_products_id;
+        }
+
+        $products = DB::table('products')
+        ->join('products_description', 'products_description.products_id', '=', 'products.products_id')
+        ->join('images', 'images.id', '=', 'products.products_image')
+        ->LeftJoin('image_categories', function ($join)
+        {
+            $join->on('image_categories.image_id', '=', 'products.products_image')->where(function ($query)
+            {
+                $query->where('image_categories.image_type', '=', 'THUMBNAIL')
+                ->where('image_categories.image_type', '=', 'THUMBNAIL')
+                ->orWhere('image_categories.image_type', '=', 'THUMBNAIL');
+            });
+        })
+        ->where('products_description.language_id', '=', 1)
+        ->where('products.products_status', '=', 1)
+        ->whereIn('products.products_id', $pro)
+        ->select('products_description.*', 'products.*', 'images.name as image_of_product', 'image_categories.path as path')
+        ->get();
+
+        return response()
+        ->json(['message' => 'All favourite products', 'fav products' => $products]);
+    }
+
+    //get allcategories
+    public function allcategories(Request $request)
+    {
+
+        $categories = DB::table('categories')->where('categories.categories_id', '!=', -1)
+        ->where('categories.categories_status', '=', 1)
+        ->get();
+        $categories_description = DB::table('categories_description')->get();
+        return response()
+        ->json(['categories' => $categories, 'description' => $categories_description]);
+
+        //     $categoryResponse = Product::allcategories($request);
+        //    print $categoryResponse;
+        
+    }
+
+    //getallproducts
+    public function getallproducts(Request $request)
+    {
+
+        $pro = Product::all();
+
+        return response()->json(['products' => $pro]);
+
+        //     $categoryResponse = Product::getallproducts($request);
+        //    print $categoryResponse;
+        
+    }
+
+    public function parentcategories(Request $request)
+    {
+
+        //$categories = DB::table('categories')->where('parent_id', '=', 0)->get();
+      
+      
+        $categories = DB::table('categories')
+
+        //             ->join('images', 'images.id', '=', 'categories.categories_image')
+        ->join('images', 'images.id', '=', 'categories.categories_icon')
+        ->join('categories_description', 'categories_description.categories_id', '=', 'categories.categories_id')
+        ->LeftJoin('image_categories', function ($join)
+        {
+            $join->on('image_categories.image_id', '=', 'categories.categories_icon')->where(function ($query)
+            {
+                $query->where('image_categories.image_type', '=', 'THUMBNAIL')
+                ->where('image_categories.image_type', '=', 'THUMBNAIL')
+                ->orWhere('image_categories.image_type', '=', 'THUMBNAIL');
+            });
+        })
+        ->where('categories.parent_id', '=', 0)
+        ->where('categories.categories_id', '!=', -1)
+        ->where('categories.categories_status', '=', 1)
+        ->where('categories_description.language_id', '=', 1)
+        ->select('categories.*', 'images.name as icon_of_category', 'categories_description.categories_name', 'categories_description.categories_description', 'image_categories.path as path')
+        ->orderBy('categories.categories_id', 'DESC')
+        ->get();
+
+        return response()
+        ->json(['parent_categories' => $categories]);
+    }
+
+
+
+    public function main_cat(Request $request)
+    {
+
+        //$categories = DB::table('categories')->where('parent_id', '=', 0)->get();
+      
+      
+        $categories = DB::table('categories')
+
+        //             ->join('images', 'images.id', '=', 'categories.categories_image')
+        ->join('images', 'images.id', '=', 'categories.categories_icon')
+        ->join('categories_description', 'categories_description.categories_id', '=', 'categories.categories_id')
+        ->LeftJoin('image_categories', function ($join)
+        {
+            $join->on('image_categories.image_id', '=', 'categories.categories_icon')->where(function ($query)
+            {
+                $query->where('image_categories.image_type', '=', 'THUMBNAIL')
+                ->where('image_categories.image_type', '=', 'THUMBNAIL')
+                ->orWhere('image_categories.image_type', '=', 'THUMBNAIL');
+            });
+        })
+        ->where('categories.parent_id', '=', 0)
+        ->where('categories.categories_id', '!=', -1)
+        ->where('categories.categories_id', '!=', 98)
+        ->where('categories.categories_id', '!=', 97)
+        ->where('categories.categories_id', '!=', 96)
+        ->where('categories.categories_status', '=', 1)
+        ->where('categories_description.language_id', '=', 1)
+        ->select('categories.*', 'images.name as icon_of_category', 'categories_description.categories_name', 'categories_description.categories_description', 'image_categories.path as path')
+        ->orderBy('categories.categories_id', 'ASC')
+        ->get();
+
+        return response()
+        ->json(['main_categories' => $categories]);
+    }
+
+
+
+    /* public function parentcategories(Request $request){
+     
+         //$categories = DB::table('categories')->where('parent_id', '=', 0)->get();
+     
+      $categories = DB::table('categories')
+         
+     
+             ->join('images', 'images.id', '=', 'categories.categories_image')
+           ->join('categories_description', 'categories_description.categories_id', '=', 'categories.categories_id')   
+             ->where('categories.parent_id', '=', 0)
+             ->where('categories_description.language_id', '=', 1) 
+             ->select('categories.*',  'images.name as image_of_category','categories_description.categories_name', 'categories_description.categories_description' )
+            ->get();
+        
+     
+         return response()->json(['parent_categories'=> $categories]);
+     }*/
+
+     public function childcategories(Request $request)
+     {
+        // return $request->parent_id;
+        // $categories = DB::table('categories')->where('parent_id', '=', $request->parent_id)->get();
+       
+       if($request->parent_id == 96){
+
+        $products1 = DB::table('hotcat')
+        ->join('images', 'images.id', '=', 'hotcat.hotcat_image')
+        ->select('hotcat.hotcat_id as categories_id', 'hotcat.hotcat_name as categories_name','hotcat.*', 'images.name as image_of_hotcat')
+        ->get();
+
+
+
+        return response()
+        ->json(['message' => 'HotCategories', 'child_categories' => $products1]);
+
+       }elseif($request->parent_id == 98){
+
+
+
+         $bundles = DB::table('bundles')
+
+         ->join('images', 'images.id', '=', 'bundles.bg_image_id')
+
+        ->join('bundles_info', 'bundles_info.bundle_id', '=', 'bundles.id')
+
+        ->where('bundles_info.language_id', '=', 1)
+        ->select('bundles.id as categories_id', 'images.name as bg_img_bundle','bundles.total_price as total_price','bundles.discounted_price as discounted_price',
+                 'bundles_info.bundle_title as categories_name', 'bundles_info.bundle_tos', 'bundles.expire_at as expiry_date', DB::raw( '0 as discount_status'))
+        ->get();
+
+
+  $now_data = Carbon::now()->toDateTimeString();
+
+        for ($i=0; $i < count($bundles) ; $i++) {
+           
+             
+               if($bundles[$i]->expiry_date > $now_data){
+                
+                $bundles[$i]->discount_status = 1; 
+            }          
+
+
+        }
+        
+
+
+
+
+
+
+
+
+
+
+        return response()
+        ->json(['child_categories' => $bundles]);
+       
+
+
+
+       }else{
+        
+
+        $categories = DB::table('categories')
+        ->join('categories_description', 'categories_description.categories_id', '=', 'categories.categories_id')
+        ->where('categories.parent_id', '=', $request->parent_id)
+        ->where('categories.categories_status', '=', 1)
+        ->where('categories_description.language_id', '=', 1)
+
+        ->select('categories.*', 'categories_description.categories_name', 'categories_description.categories_description')
+        ->get();
+        $count = $categories->count();
+        // return $count;
+    //     $categories[]=[
+    //         "categories_id"=> $request->parent_id,
+    //         "categories_image"=> "300",
+    //         "categories_icon"=> "1124",
+    //         "parent_id"=> 13,
+    //         "sort_order"=> null,
+    //         "date_added"=> null,
+    //         "last_modified"=> null,
+    //         "categories_slug"=> "recomended",
+    //         "categories_status"=> 1,
+    //         "created_at"=> "2020-12-10 09:46:57",
+    //         "updated_at"=> "2021-01-09 10:02:48",
+    //         "categories_name"=> "Recomended",
+    //         "categories_description"=> "Recomended"
+    // ];
+        // return $categories->count();
+        $x = [
+            "categories_id"=> $request->parent_id,
+            "categories_image"=> "300",
+            "categories_icon"=> "1124",
+            "parent_id"=> 13,
+            "sort_order"=> null,
+            "date_added"=> null,
+            "last_modified"=> null,
+            "categories_slug"=> "recomended",
+            "categories_status"=> 1,
+            "created_at"=> "2020-12-10 09:46:57",
+            "updated_at"=> "2021-01-09 10:02:48",
+            "categories_name"=> "Recomended",
+            "categories_description"=> "Recomended"
+        ];
+
+        $categories->prepend($x);
+
+        return response()
+        ->json(['child_categories' => $categories]);
+        }
+     }
+
+     public function catproducts_old(Request $request)
+     {
+
+        $products = DB::table('products_to_categories')->where('categories_id', '=', $request->cat_id)
+        ->join('products', 'products.products_id', '=', 'products_to_categories.products_id')
+        ->join('products_description', 'products_description.products_id', '=', 'products_to_categories.products_id') 
+        ->LeftJoin('image_categories', function ($join)
+        {
+            $join->on('image_categories.image_id', '=', 'products.products_image')->where(function ($query)
+            {
+                $query->where('image_categories.image_type', '=', 'THUMBNAIL')
+                ->where('image_categories.image_type', '=', 'THUMBNAIL')
+                ->orWhere('image_categories.image_type', '=', 'THUMBNAIL');
+            });
+        })
+        
+        ->where('products_description.language_id', '=', 1)
+        ->where('products.products_status', '=', 1)
+        ->join('images', 'images.id', '=', 'products.products_image')
+        ->select('products_to_categories.*', 'products.*', 'products_description.*', 'images.name as image_of_product','image_categories.path as path')
+        ->get();
+
+        return response()
+        ->json(['category_products' => $products]);
+
+     }
+
+  
+    public function catproducts(Request $request)
+    {
+
+        $products = DB::table('products_to_categories')->where('categories_id', '=', $request->cat_id)
+        ->join('products', 'products.products_id', '=', 'products_to_categories.products_id')
+        ->LeftJoin('bundles_products', 'bundles_products.product_id', '=', 'products.products_id')
+        ->LeftJoin('products_description', 'products_description.products_id', '=', 'products.products_id')
+        ->LeftJoin('products as sub_products', 'sub_products.parent_products_id', '=', 'products.products_id')
+        ->LeftJoin('images', 'images.id', '=', 'products.products_image')
+        ->LeftJoin('flash_sale','flash_sale.products_id', '=', 'products.products_id')  
+        ->LeftJoin('specials', 'specials.products_id', '=', 'products.products_id')
+        ->LeftJoin('image_categories', function ($join)
+            
+        {
+            $join->on('image_categories.image_id', '=', 'products.products_image')->where(function ($query)
+            {
+                $query->where('image_categories.image_type', '=', 'THUMBNAIL')
+                ->where('image_categories.image_type', '=', 'THUMBNAIL')
+                ->orWhere('image_categories.image_type', '=', 'THUMBNAIL');
+            });
+        })
+        
+        ->where('products_description.language_id', '=', 1)
+        ->where('products.products_status', '=', 1)
+        ->where('products.parent_products_id', '=', null)
+        
+
+        ->select( 'products.products_id as products_products_id',
+            'bundles_products.product_id as product_in_bundles',
+            'products.*', 
+            'products_description.*', 
+            'products_description.products_id as products_description_products_id',
+            'images.name as image_of_product',
+            'image_categories.path as path','flash_sale.*',
+            'flash_sale.products_id as flash_sale_products_id',
+            DB::raw( '0 as flash_sale_timer_duration'),
+            DB::raw( '0 as flash_sale_timer_status'),
+            'specials.*',DB::raw('0 as special_discount_price_status'),
+            'specials.products_id as specials_products_id',
+            'specials.status as specials_status',
+            'sub_products.products_id  as product_variation_id',
+            'sub_products.products_weight  as product_variation_weight',
+            'sub_products.products_weight_unit  as product_variation_unit'
+        )
+         // ->orderBy('products_products_id', 'DESC')
+         // ->take(20)  
+          ->groupBy('products_products_id')
+        ->get();
+        
+
+        $nowTime = date("Y-m-d H:i:s", time());
+        
+        for ($i=0; $i < count($products) ; $i++) {
+            $expiry  = date("Y-m-d H:i:s", $products[$i]->expires_date);
+            $flash_expires_date  = date("Y-m-d H:i:s",  $products[$i]->flash_expires_date);
+            
+            $flash_start_date  = date("Y-m-d H:i:s",  $products[$i]->flash_start_date);
+
+            
+            
+            if($products[$i]->specials_id != null && $expiry > $nowTime && $products[$i]->specials_status == 1){
+                
+                $products[$i]->special_discount_price_status = 1; 
+            }
+
+            if($products[$i]->flash_sale_id != null && $flash_expires_date > $nowTime &&  $products[$i]->flash_status == 1){
+                
+                
+                $dtDiff = $products[$i]->flash_expires_date - time();
+                $totalDays = intval($dtDiff/(24*60*60));
+                $totalHours = $totalDays * 24;
+                
+                $products[$i]->flash_sale_timer_status = 1; 
+                $products[$i]->flash_sale_timer_duration = $totalHours; 
+            }
+        }
+        
+        return response()->json(['category_products' => $products]);
+        
+    }
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+     public function productSearch(Request $request)
+     {
+
+        $searchTerm = $request->name;
+
+        $products = DB::table('products')
+        ->join('products_description', 'products_description.products_id', '=', 'products.products_id')
+        ->join('images', 'images.id', '=', 'products.products_image')
+        ->where('products_name', 'LIKE', "%{$searchTerm}%")->where('products.products_status', '=', 1)
+        ->orWhere('products_description', 'LIKE', "%{$searchTerm}%")->select('products_description.*', 'products.*', 'images.name as image_of_product')
+        ->get();
+
+        return response()
+        ->json(['searched_products' => $products]);
+     }
+
+     public function addCart(Request $request)
+     {
+
+        $email = $request->email;
+        $product_id = $request->product_id;
+
+        $user = DB::table('users')->where('email', $email)->first();
+
+        $cart = new Cart();
+        $cart->user_id = $user->id;
+        $cart->product_id = $product_id;
+        $cart->save();
+
+        return response()
+        ->json(['message' => 'product is added in cart'], 200);
+     }
+
+       public function addCartBundle(Request $request)
+     {
+
+        $email = $request->email;
+        $bundle_id = $request->bundle_id;
+
+        $user = DB::table('users')->where('email', $email)->first();
+         
+       $check = DB::table('cart_bundle')->where('user_id', '=', $user->id)
+        ->where('bundle_id', '=', $bundle_id)->first();
+         
+        if(!$check){ 
+
+         DB::table('cart_bundle')->insert([
+
+        'user_id' => $user->id,
+        'bundle_id' => $bundle_id,
+           'qty'=>1
+        
+        ]);
+
+
+        return response()
+        ->json(['message' => 'bundle is added in cart'], 200);
+        }
+         else{
+          return response()
+        ->json(['message' => 'bundle is already in cart'], 200);
+        }
+     }
+
+    public function remove_bundle_from_cart(Request $request){
+        
+        $email = $request->email;
+        $bundle_id = $request->bundle_id;
+
+        $user = DB::table('users')->where('email', $email)->first();
+         
+       $check = DB::table('cart_bundle')->where('user_id', '=', $user->id)
+        ->where('bundle_id', '=', $bundle_id)->first();
+      $check->delete();
+      return response()
+        ->json(['message' => 'Bundle is removed from cart'], 200);
+      
+    }
+  
+
+     public function getAllcartPro(Request $request)
+     {
+
+        $email = $request->email;
+
+        $users = DB::table('users')->where('email', $email)->get();
+        $f_user = DB::table('users')->where('email', $email)->first();
+
+        $ids = [];
+        foreach ($users as $user)
+        {
+            $ids[] = $user->id;
+        }
+
+        $cartItems = Cart::whereIn('user_id', $ids)->get();
+
+        $cart_ids = [];
+        foreach ($cartItems as $cartItem)
+        {
+            $cart_ids[] = $cartItem->product_id;
+        }
+
+        $products = DB::table('products')
+        ->join('products_description', 'products_description.products_id', '=', 'products.products_id')
+        ->join('images', 'images.id', '=', 'products.products_image')
+        ->join('cart', 'cart.product_id', '=', 'products.products_id')
+        ->where('products_description.language_id', '=', 1)
+        ->where('products.products_status', '=', 1)
+        ->whereIn('products.products_id', $cart_ids)->select('cart.qty as cart_quantity', 'products_description.*', 'products.*', 'images.name as image_of_product')
+        ->get();
+
+
+        $bundles = DB::table('cart_bundle')->where('user_id','=',$f_user->id)
+          
+          ->join('bundles', 'bundles.id', '=', 'cart_bundle.bundle_id')
+          
+
+          //->join('images', 'images.id', '=', 'bundles.bg_image_id')
+        ->LeftJoin('image_categories', function ($join)
+            
+        {
+            $join->on('image_categories.image_id', '=', 'bundles.bg_image_id')->where(function ($query)
+            {
+                $query->where('image_categories.image_type', '=', 'THUMBNAIL')
+                ->where('image_categories.image_type', '=', 'THUMBNAIL')
+                ->orWhere('image_categories.image_type', '=', 'THUMBNAIL');
+            });
+        })          
+
+        ->join('bundles_info', 'bundles_info.bundle_id', '=', 'bundles.id')
+         ->where('cart_bundle.user_id','=',$f_user->id)
+        ->where('bundles_info.language_id', '=', 1)
+        ->select('cart_bundle.*', 'bundles.*', 'image_categories.path as path', 'bundles_info.bundle_title', 'bundles_info.bundle_tos')
+        ->get();
+
+
+
+
+        return response()
+        ->json(['message' => 'cart products', 'cartproducts' => $products, 'cart_bundles'=>$bundles], 200);
+     }
+
+     public function removeCart(Request $request)
+     {
+
+        $email = $request->email;
+        $product_id = $request->product_id;
+
+        $user = DB::table('users')->where('email', $email)->first();
+
+        $cart = Cart::where('user_id', '=', $user->id)
+        ->where('product_id', '=', $product_id)->first();
+
+        $cart->delete();
+
+        return response()
+        ->json(['message' => 'product is removed from cart'], 200);
+     }
+
+     public function removeallCart(Request $request)
+     {
+
+        $email = $request->email;
+
+        $user = DB::table('users')->where('email', $email)->first();
+        //       $user = DB::table('users')->get();
+        
+
+        $cart = Cart::where('user_id', '=', $user->id)
+        ->get();
+        $bundles = DB::table('cart_bundle')->where('user_id','=',$user->id)->get();
+
+
+         if ($bundles->count() == 0 &&  $cart->count() == 0 ){
+
+            return response()
+            ->json(['message' => 'your cart is empty'], 200);
+ 
+         }
+
+
+        if ($bundles->count() > 0)
+        {
+            foreach ($bundles as $bun)
+            {
+                $bun->delete();
+            }
+
+        }
+
+
+        if ($cart->count() > 0)
+        {
+
+            foreach ($cart as $car)
+            {
+                $car->delete();
+            }
+        }
+
+     return response()
+            ->json(['message' => 'ALL cart items are flushed'], 200);
+    
+
+        
+     }
+
+     public function addqty(Request $request)
+     {
+
+        $email = $request->email;
+        $product_id = $request->product_id;
+
+        $user = DB::table('users')->where('email', $email)->first();
+
+        $cart = Cart::where('user_id', '=', $user->id)
+        ->where('product_id', '=', $product_id)->first();
+
+        $cart->qty = $request->qty;
+        $cart->save();
+
+        return response()
+        ->json(['message' => 'product quantity updated'], 200);
+     }
+
+
+     public function add_bundle_qty(Request $request)
+     {
+
+        $email = $request->email;
+        $bundle_id = $request->bundle_id;
+
+        $user = DB::table('users')->where('email', $email)->first();
+       
+       
+    
+       $cart = DB::table('cart_bundle')->where('user_id', '=', $user->id)
+        ->where('bundle_id', '=', $bundle_id)->increment('qty',1);
+
+
+        return response()
+        ->json(['message' => 'product quantity updated'], 200);
+     }
+
+     public function decrease_bundle_qty(Request $request)
+     {
+
+        $email = $request->email;
+        $bundle_id = $request->bundle_id;
+
+        $user = DB::table('users')->where('email', $email)->first();
+
+        $cart = DB::table('cart_bundle')->where('user_id', '=', $user->id)
+        ->where('bundle_id', '=', $bundle_id)->decrement('qty',1);
+
+
+        return response()
+        ->json(['message' => 'product quantity updated'], 200);
+     }     
+
+
+
+
+     public function sliderimages(Request $request)
+     {
+
+        $sliders = DB::table('sliders_images')
+        ->where('sliders_images.status', '=', 1)
+        ->leftJoin('image_categories', 'sliders_images.sliders_image', '=', 'image_categories.image_id')
+        ->select('sliders_images.*', 'image_categories.path')
+
+                ->get();
+
+        return response()
+        ->json(['message' => 'slider_images', 'sliders' => $sliders], 200);
+     }
+
+     public function settings(Request $request)
+     {
+
+        $sliders = DB::table('settings')->get();
+
+        return response()
+        ->json(['message' => 'settings', 'settings' => $sliders], 200);
+     }
+
+     
+
+     public function hotcat(Request $request)
+     {
+
+        $products = DB::table('hotcat')
+        ->join('images', 'images.id', '=', 'hotcat.hotcat_image')
+        ->select('hotcat.*', 'images.name as image_of_hotcat')
+        ->get();
+
+        return response()
+        ->json(['message' => 'HotCategories', 'hotcategories' => $products]);
+     }
+
+     public function terms(Request $request)
+     {
+
+        $pages = DB::table('pages')
+        ->join('pages_description', 'pages_description.page_id', '=', 'pages.page_id')
+
+        ->where('pages_description.language_id', '=', 1)
+        ->where('pages.type', '=', 1)
+        ->where('pages.page_id', '=', 2)
+        ->select('pages.*', 'pages_description.*')
+        ->first();
+
+        return response()
+        ->json(['message' => 'Terms', 'terms' => $pages]);
+     }
+
+     public function single_setting(Request $request)
+     {
+
+        $id = $request->id;
+
+        $sliders = DB::table('settings')->where('id', '=', $id)->first();
+
+        return response()
+        ->json(['message' => 'Single Settings', 'settings' => $sliders], 200);
+     }
+
+     public function app_menus_main(Request $request)
+     {
+
+        $products = DB::table('app_menus')
+        ->join('app_menus_langs', 'app_menus_langs.app_menu_id', '=', 'app_menus.id')
+        ->where('app_menus_langs.language_id', '=', 1)
+        ->where('app_menus.menu_type', '=', 'Main')
+        ->where('app_menus.status', '=', 1)
+        ->select('app_menus.*', 'app_menus_langs.*')
+        ->get();
+        $bg = DB::table('settings')->where('id', '=', 151)
+        ->first();
+
+        return response()
+        ->json(['message' => 'App Menus Main', 'welcome_image' => $bg, 'app_menus_main' => $products]);
+     }
+
+     public function app_menus_bottom(Request $request)
+     {
+        $products = DB::table('app_menus')
+        ->join('app_menus_langs', 'app_menus_langs.app_menu_id', '=', 'app_menus.id')
+        ->where('app_menus_langs.language_id', '=', 1)
+        ->where('app_menus.menu_type', '=', 'Bottom')
+        ->select('app_menus.*', 'app_menus_langs.*')
+        ->get();
+        $bg = DB::table('settings')->where('id', '=', 151)
+        ->first();
+        return response()
+        ->json(['message' => 'App Menus Bottom', 'welcome_image' => $bg, 'app_menus_bottom' => $products]);
+     }
+
+     public function app_menus(Request $request)
+     {
+
+        $bg = DB::table('settings')->where('id', '=', 151)
+        ->first();
+
+        $products = DB::table('app_menus')
+        ->join('app_menus_langs', 'app_menus_langs.app_menu_id', '=', 'app_menus.id')
+        ->where('app_menus_langs.language_id', '=', 1)
+
+        ->select('app_menus.*', 'app_menus_langs.*')
+        ->get();
+
+        return response()
+        ->json(['message' => 'App Menus', 'welcome_image' => $bg, 'app_menus' => $products]);
+     }
+
+     public function couponsall(Request $request)
+     {
+
+        $top_offers = DB::table('coupons')
+        ->get();
+
+        return response()
+        ->json(['message' => 'All Coupons', 'coupons' => $top_offers]);
+     }
+     
+     public function privacy(Request $request)
+     {
+
+        $pages = DB::table('pages')
+        ->join('pages_description', 'pages_description.page_id', '=', 'pages.page_id')
+
+        ->where('pages_description.language_id', '=', 1)
+        ->where('pages.type', '=', 1)
+        ->where('pages.page_id', '=', 1)
+        ->select('pages.*', 'pages_description.*')
+        ->get();
+
+        return response()
+        ->json(['message' => 'Privacy', 'privacy' => $pages]);
+     }
+
+     public function allpages(Request $request)
+     {
+
+        $pages = DB::table('pages')
+        ->join('pages_description', 'pages_description.page_id', '=', 'pages.page_id')
+
+        ->where('pages_description.language_id', '=', 1)
+        ->where('pages.type', '=', 1)
+        ->select('pages.*', 'pages_description.*')
+        ->get();
+
+        return response()
+        ->json(['message' => 'All PAGES', 'pages' => $pages]);
+     }
+
+     public function getpages(Request $request)
+     {
+
+        $pages_id = $request->page_id;
+
+        $pages = DB::table('pages_description')->where('page_id', $pages_id)->first();
+
+        return response()
+        ->json(['message' => 'CURRENT PAGE', 'current_page' => $pages]);
+     }
+
+     public function getter()
+     {
+
+        $language_id = '1';
+
+        $manufacturers = Manufacturers::sortable(['manufacturers_id' => 'desc'])->leftJoin('manufacturers_info', 'manufacturers_info.manufacturers_id', '=', 'manufacturers.manufacturers_id')->LeftJoin('image_categories', function ($join)
+        {
+            $join->on('image_categories.image_id', '=', 'manufacturers.manufacturer_image')->where(function ($query)
+            {
+                $query->where('image_categories.image_type', '=', 'THUMBNAIL')
+                ->where('image_categories.image_type', '!=', 'THUMBNAIL')
+                ->orWhere('image_categories.image_type', '=', 'ACTUAL');
+            });
+        })
+        ->select('manufacturers.manufacturers_id as id', 'manufacturers.manufacturer_image as image', 'manufacturers.manufacturer_name as name', 'manufacturers_info.manufacturers_url as url', 'manufacturers_info.url_clicked', 'manufacturers_info.date_last_click as clik_date', 'image_categories.path as path')
+        ->where('manufacturers_info.languages_id', $language_id)->get();
+        return $manufacturers;
+     }
+
+     public function manufacturers(Request $request)
+     {
+
+        $products = DB::table('manufacturers')
+        ->join('manufacturers_info', 'manufacturers_info.manufacturers_id', '=', 'manufacturers.manufacturers_id')
+        //           ->join('images', 'images.id', '=', 'manufacturers.manufacturer_image')
+        ->LeftJoin('image_categories', function ($join)
+        {
+            $join->on('image_categories.image_id', '=', 'manufacturers.manufacturer_image')->where(function ($query)
+            {
+                $query->where('image_categories.image_type', '=', 'THUMBNAIL')
+                ->where('image_categories.image_type', '!=', 'THUMBNAIL')
+                ->orWhere('image_categories.image_type', '=', 'ACTUAL');
+            });
+        })
+        ->where('manufacturers_info.languages_id', '=', 1)
+
+        ->select('manufacturers.manufacturers_id as id', 'manufacturers_info.*', 'manufacturers.manufacturer_image as image', 'manufacturers.manufacturer_name as name', 'manufacturers_info.manufacturers_url as url', 'manufacturers_info.url_clicked', 'manufacturers_info.date_last_click as clik_date', 'image_categories.path as path')
+        ->get();
+
+        return response()
+        ->json(['message' => 'All manufacturers', 'manufacturers' => $products]);
+     }
+
+     public function banners(Request $request)
+     {
+
+        $products = DB::table('banners')
+        ->join('images', 'images.id', '=', 'banners.banners_image')
+
+        ->select('banners.*', 'images.name as image_of_banner')
+        ->get();
+
+        return response()
+        ->json(['message' => 'All banners', 'banners' => $products]);
+     }
+
+    /*
+     public function top_offers(Request $request){
+      
+          $top_offers = DB::table('top_offers')
+            ->where('language_id', '=', 1) 
+            ->get();
+        
+           return response()->json(['message'=> 'Top Offers', 'top_offers'=>$top_offers]);
+     }
+    
+    
+    */
+
+    // likeproduct
+     public function likeproduct(Request $request)
+     {
+        $categoryResponse = Product::likeproduct($request);
+        print $categoryResponse;
+     }
+
+    // likeProduct
+     public function unlikeproduct(Request $request)
+     {
+        $categoryResponse = Product::unlikeproduct($request);
+        print $categoryResponse;
+     }
+
+    //getfilters
+     public function getfilters(Request $request)
+     {
+        $categoryResponse = Product::getfilters($request);
+        print $categoryResponse;
+     }
+
+    //getfilterproducts
+     public function getfilterproducts(Request $request)
+     {
+        $categoryResponse = Product::getfilterproducts($request);
+        print $categoryResponse;
+     }
+
+    //getsearchdata
+     public function getsearchdata(Request $request)
+     {
+        $categoryResponse = Product::getsearchdata($request);
+        print $categoryResponse;
+     }
+
+    //getquantity
+     public function getquantity(Request $request)
+     {
+        $response = Product::getquantity($request);
+        print $response;
+     }
+
+    //shippingMethods
+     public function shppingbyweight(Request $request)
+     {
+        $categoryResponse = Product::shppingbyweight($request);
+        print $categoryResponse;
+
+     }
+
+ }
+

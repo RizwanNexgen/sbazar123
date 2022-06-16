@@ -1,0 +1,4 @@
+deployment:
+      tasks:
+        - export DEPLOYPATH=/home/netthemesco/public_html/laravelCommerce/laravelgrocery
+        - /bin/cp -r * $DEPLOYPATH   
