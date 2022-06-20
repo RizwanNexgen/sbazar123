@@ -363,7 +363,7 @@ class ProductController extends Controller
         }
         
         //dd($result);
-        // return $result;
+        return $result;
         return view("admin.products.edit", $title)->with('result', $result)->with('allimage', $allimage);
 
     }

@@ -754,6 +754,11 @@ class MyProductController extends Controller
             ->where('md.language_id', 1)
             ->get();
             
+            $mem = $mem->map(function($m) {
+              $m->membership_image_path = url('/').'/'.$m->membership_image_path;
+              return $m;
+            });
+            
         return response()->json(['memberships' => $mem], 200);
     }
     

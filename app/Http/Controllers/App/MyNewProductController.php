@@ -33,11 +33,11 @@ class MyNewProductController extends Controller
         $shipping_methods = DB::table('shipping_methods')->where('status',1)->get();
         $method_details = [];
         foreach($shipping_methods as $key => $method ){
-            $method_details[$key]['method'] = $method;
-            $method_details[$key]['method_details'] = DB::table($method->table_name)->get();
+            $method = get_object_vars($method);
+            $res=DB::table($method['table_name'])->get();
+            $method['method_details']=$res;
+            $method_details[$key] = $method;
         }
-
-        
         return response()->json(['message' => 'Shipping Methods', 'shipping_methods' => $method_details]);
     }
     
