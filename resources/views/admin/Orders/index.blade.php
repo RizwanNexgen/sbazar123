@@ -99,6 +99,7 @@
                                         </tbody>
                                     </table>
                                     <div class="col-xs-12 text-right">
+                                        
                                         {{$listingOrders['orders']->links()}}
                                     </div>
                                 </div>

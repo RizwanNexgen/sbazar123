@@ -28,7 +28,7 @@ class OrdersController extends Controller
         $message = array();
         $errorMessage = array();        
         
-        $ordersData['orders'] = $this->Order->paginator();
+        $ordersData['orders'] = $this->Order->paginate(10);
         $ordersData['message'] = $message;
         $ordersData['errorMessage'] = $errorMessage;
         $ordersData['currency'] = $this->myVarsetting->getSetting(); 
@@ -62,7 +62,7 @@ class OrdersController extends Controller
         $ordersData['currency'] = $this->myVarsetting->getSetting();
         $result['commonContent'] = $this->Setting->commonContent();
 
-        //dd($ordersData);
+        
 
         return view("admin.Orders.vieworder", $title)->with('data', $ordersData)->with('result', $result);
     }

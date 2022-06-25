@@ -154,7 +154,7 @@ class Products extends Model
         $products = $data->orderBy('products.products_id', 'DESC')
         //->where('categories_status', '1')
         ->where('is_current', '1')
-        ->where('product_images_cloud.image_no', '0')
+        // ->where('product_images_cloud.image_no', '0')
         ->groupBy('products.products_id')
         ->paginate($commonsetting['pagination']);
         //->dd();

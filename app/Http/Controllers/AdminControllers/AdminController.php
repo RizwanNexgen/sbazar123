@@ -198,8 +198,22 @@ class AdminController extends Controller
 		foreach($notInsertedinInentory as $vproduct){
 			$products_ids[] =$vproduct->products_id;
 		}
+		
+		$outofstocks = DB::table('products')
+            ->select('products_id','products_min_stock','products_in_stock')
+            ->get(); 
+        
+        $outofstocks_ids = [];   
+        foreach($outofstocks as $outofstock){
+            if($outofstock->products_min_stock > $outofstock->products_in_stock){
+                $outofstocks_ids[] = $outofstock->products_id;
+            }
+        }    
+ 
+            
+		
   		$result['lowLimit'] = $lowLimit;
-  		$result['outOfStock'] = count($products_ids);
+  		$result['outOfStock'] = count($outofstocks_ids);
   		$result['totalProducts'] = count($products);
 		
       	$users = array();		  

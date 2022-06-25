@@ -71,7 +71,7 @@ class Order extends Model
             $orders_id = $data->orders_id;
 
             $orders_products = DB::table('orders_products')
-                ->join('products', 'products.products_id', '=', 'orders_products.products_id')
+                ->join('products', 'products.products_id', '=', 'orders_products.item_id')
                 ->LeftJoin('image_categories', function ($join) {
                     $join->on('image_categories.image_id', '=', 'products.products_image')
                         ->where(function ($query) {
@@ -110,9 +110,13 @@ class Order extends Model
                 ->where('orders_id', '=', $orders_id)
                 ->where('orders_status.role_id','=',2)->where('orders_status_description.language_id', $language_id)
                 ->orderby('orders_status_history.orders_status_history_id', 'DESC')->limit(1)->first();
+                
+            if($orders_status_history){
+                $data->orders_status_id = $orders_status_history->orders_status_id;
+                $data->orders_status_name = $orders_status_history->orders_status_name;
+            }    
 
-            $data->orders_status_id = $orders_status_history->orders_status_id;
-            $data->orders_status_name = $orders_status_history->orders_status_name;
+
             
             $data->data = $product;
             $orders_data[] = $data;

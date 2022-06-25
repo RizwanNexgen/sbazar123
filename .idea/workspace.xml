@@ -1,7 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="410b093c-6f3d-4472-9413-965a1ba9fc7f" name="Default Changelist" comment="" />
+    <list default="true" id="410b093c-6f3d-4472-9413-965a1ba9fc7f" name="Default Changelist" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Http/Controllers/AdminControllers/AdminController.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/Http/Controllers/AdminControllers/AdminController.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Http/Controllers/AdminControllers/OrdersController.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/Http/Controllers/AdminControllers/OrdersController.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Http/Controllers/AdminControllers/ProductController.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/Http/Controllers/AdminControllers/ProductController.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Models/Core/Order.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/Models/Core/Order.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Models/Core/Products.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/Models/Core/Products.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/resources/views/admin/Orders/index.blade.php" beforeDir="false" afterPath="$PROJECT_DIR$/resources/views/admin/Orders/index.blade.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/resources/views/admin/common/meta.blade.php" beforeDir="false" afterPath="$PROJECT_DIR$/resources/views/admin/common/meta.blade.php" afterDir="false" />
+    </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -13,27 +22,9 @@
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/app/Http/Controllers/App/MyProductController.php_bkp 090721">
-          <provider selected="true" editor-type-id="text-editor" />
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/routes/api.php">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="841">
-              <caret line="479" lean-forward="true" selection-start-line="479" selection-end-line="479" />
-            </state>
-          </provider>
-        </entry>
-      </file>
       <file pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/app/Http/Controllers/App/MyProductController.php">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="8797">
-              <caret line="3969" lean-forward="true" selection-start-line="3969" selection-end-line="3969" />
-            </state>
-          </provider>
+        <entry file="file://$PROJECT_DIR$/resources/views/admin/common/meta.blade.php">
+          <provider selected="true" editor-type-id="text-editor" />
         </entry>
       </file>
     </leaf>
@@ -209,49 +200,44 @@
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
-      <pane id="Scope" />
       <pane id="ProjectPane">
         <subPane>
           <expand>
             <path>
-              <item name="sbazar_backend" type="b2602c69:ProjectViewProjectNode" />
-              <item name="sbazar_backend" type="462c0819:PsiDirectoryNode" />
+              <item name="sbazargit" type="b2602c69:ProjectViewProjectNode" />
+              <item name="sbazargit" type="462c0819:PsiDirectoryNode" />
             </path>
             <path>
-              <item name="sbazar_backend" type="b2602c69:ProjectViewProjectNode" />
-              <item name="sbazar_backend" type="462c0819:PsiDirectoryNode" />
-              <item name="app" type="462c0819:PsiDirectoryNode" />
+              <item name="sbazargit" type="b2602c69:ProjectViewProjectNode" />
+              <item name="sbazargit" type="462c0819:PsiDirectoryNode" />
+              <item name="resources" type="462c0819:PsiDirectoryNode" />
             </path>
             <path>
-              <item name="sbazar_backend" type="b2602c69:ProjectViewProjectNode" />
-              <item name="sbazar_backend" type="462c0819:PsiDirectoryNode" />
-              <item name="app" type="462c0819:PsiDirectoryNode" />
-              <item name="Http" type="462c0819:PsiDirectoryNode" />
+              <item name="sbazargit" type="b2602c69:ProjectViewProjectNode" />
+              <item name="sbazargit" type="462c0819:PsiDirectoryNode" />
+              <item name="resources" type="462c0819:PsiDirectoryNode" />
+              <item name="views" type="462c0819:PsiDirectoryNode" />
             </path>
             <path>
-              <item name="sbazar_backend" type="b2602c69:ProjectViewProjectNode" />
-              <item name="sbazar_backend" type="462c0819:PsiDirectoryNode" />
-              <item name="app" type="462c0819:PsiDirectoryNode" />
-              <item name="Http" type="462c0819:PsiDirectoryNode" />
-              <item name="Controllers" type="462c0819:PsiDirectoryNode" />
+              <item name="sbazargit" type="b2602c69:ProjectViewProjectNode" />
+              <item name="sbazargit" type="462c0819:PsiDirectoryNode" />
+              <item name="resources" type="462c0819:PsiDirectoryNode" />
+              <item name="views" type="462c0819:PsiDirectoryNode" />
+              <item name="admin" type="462c0819:PsiDirectoryNode" />
             </path>
             <path>
-              <item name="sbazar_backend" type="b2602c69:ProjectViewProjectNode" />
-              <item name="sbazar_backend" type="462c0819:PsiDirectoryNode" />
-              <item name="app" type="462c0819:PsiDirectoryNode" />
-              <item name="Http" type="462c0819:PsiDirectoryNode" />
-              <item name="Controllers" type="462c0819:PsiDirectoryNode" />
-              <item name="App" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="sbazar_backend" type="b2602c69:ProjectViewProjectNode" />
-              <item name="sbazar_backend" type="462c0819:PsiDirectoryNode" />
-              <item name="routes" type="462c0819:PsiDirectoryNode" />
+              <item name="sbazargit" type="b2602c69:ProjectViewProjectNode" />
+              <item name="sbazargit" type="462c0819:PsiDirectoryNode" />
+              <item name="resources" type="462c0819:PsiDirectoryNode" />
+              <item name="views" type="462c0819:PsiDirectoryNode" />
+              <item name="admin" type="462c0819:PsiDirectoryNode" />
+              <item name="common" type="462c0819:PsiDirectoryNode" />
             </path>
           </expand>
           <select />
         </subPane>
       </pane>
+      <pane id="Scope" />
     </panes>
   </component>
   <component name="PropertiesComponent">
@@ -294,16 +280,18 @@
       <workItem from="1654383494362" duration="1139000" />
       <workItem from="1654431461866" duration="1597000" />
       <workItem from="1654493245372" duration="1782000" />
+      <workItem from="1656181112993" duration="724000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="13602000" />
+    <option name="totallyTimeSpent" value="14326000" />
   </component>
   <component name="ToolWindowManager">
-    <frame x="-8" y="-8" width="1936" height="1056" extended-state="6" />
+    <frame x="-8" y="-8" width="1382" height="744" extended-state="6" />
+    <editor active="true" />
     <layout>
-      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.26385927" />
+      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.2677761" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
       <window_info id="npm" order="2" side_tool="true" />
       <window_info id="Favorites" order="3" side_tool="true" />
@@ -443,19 +431,22 @@
     <entry file="file://$PROJECT_DIR$/app/Http/Controllers/App/MyProductController.php_bkp 090721">
       <provider selected="true" editor-type-id="text-editor" />
     </entry>
+    <entry file="file://$PROJECT_DIR$/app/Http/Controllers/App/MyProductController.php">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="529">
+          <caret line="3969" selection-start-line="3969" selection-end-line="3969" />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/routes/api.php">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="841">
+        <state relative-caret-position="529">
           <caret line="479" lean-forward="true" selection-start-line="479" selection-end-line="479" />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/app/Http/Controllers/App/MyProductController.php">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="8797">
-          <caret line="3969" lean-forward="true" selection-start-line="3969" selection-end-line="3969" />
-        </state>
-      </provider>
+    <entry file="file://$PROJECT_DIR$/resources/views/admin/common/meta.blade.php">
+      <provider selected="true" editor-type-id="text-editor" />
     </entry>
   </component>
 </project>

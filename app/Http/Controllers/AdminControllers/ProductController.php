@@ -89,6 +89,7 @@ class ProductController extends Controller
     public function display(Request $request)
     {
         //return 1;
+      
         $language_id = '1';
         $categories_id = $request->categories_id;
         $product = $request->product;
@@ -96,7 +97,7 @@ class ProductController extends Controller
 
         $subCategories = $this->category->allcategories($language_id);
 
-        $products = $this->products->paginator($request);
+       $products = $this->products->paginator($request);
 
         $results['products'] = $products;
         $results['currency'] = $this->myVarsetting->getSetting();
@@ -363,7 +364,7 @@ class ProductController extends Controller
         }
         
         //dd($result);
-        // return $result;
+        return $result;
         return view("admin.products.edit", $title)->with('result', $result)->with('allimage', $allimage);
 
     }
