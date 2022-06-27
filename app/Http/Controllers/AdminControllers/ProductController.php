@@ -13,6 +13,7 @@ use App\Models\Core\Products;
 use App\Models\Core\Hotcats;
 use App\Models\Core\Reviews;
 use App\Models\Core\Setting;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Lang;
@@ -364,7 +365,7 @@ class ProductController extends Controller
         }
         
         //dd($result);
-        return $result;
+//        return $result;
         return view("admin.products.edit", $title)->with('result', $result)->with('allimage', $allimage);
 
     }
@@ -528,11 +529,20 @@ class ProductController extends Controller
         try{
 
             \Tinify\setKey(env("TINIFY_API_KEY"));
+
+            $check_value =  DB::table('products')->where('products_id', $request->products_id)->first();
+
+            $stock_updated_at = $check_value->stock_updated_at;
+
+            if($request->stock != $check_value->products_in_stock){
+                $stock_updated_at = \Carbon\Carbon::now();
+            }
        
             DB::table('products')->where('products_id', $request->products_id)->update([
                 'products_in_stock' => $request->stock,
                 'products_min_stock' => $request->min_level,
                 'products_max_stock' => $request->max_level,
+                'stock_updated_at' => $stock_updated_at,
                 'products_min_order' => $request->products_min_order,
                 'expire_date' => date('Y-m-d', strtotime(str_replace('/', '-', $request->expire_date))),
             ]);

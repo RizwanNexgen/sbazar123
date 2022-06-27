@@ -28,7 +28,142 @@ class MyNewProductController extends Controller
     {
         $this->Setting = $setting;
     }
-    
+
+    public function get_back_in_stock(){
+        $products = DB::table('products as p')
+            ->where('p.products_status', 1)
+            ->leftJoin('products_description as pd', 'pd.products_id', '=', 'p.products_id')
+            ->leftJoin('products_to_hotcats as pth', 'pth.products_id', '=', 'p.products_id')
+            ->leftJoin('hotcats as h', 'h.hotcats_id', '=', 'pth.hotcats_id')
+            ->leftJoin('manufacturers as mn', 'mn.manufacturers_id', '=', 'p.manufacturers_id')
+            ->leftJoin('specials as s', function($join)
+            {
+                $join->on('s.products_id', '=', 'p.products_id')
+                    ->where(function ($query) {
+                        $query->where('s.status', '=', 1);
+                        $query->where('expires_date', '>=', strtotime("now"));
+                    });
+            })
+            ->where('pd.language_id', 1)
+            ->where('p.products_in_stock', '>', 0)
+            ->where('mn.manufacturer_status', 1)
+            ->where('p.stock_updated_at','!=', NULL)
+            ->groupBy('p.products_id')
+            ->orderBy('p.stock_updated_at', 'DESC')
+            ->select('p.products_id as product_id',
+                'p.products_type as products_type',
+                'p.products_in_stock as product_stock',
+                'pd.products_name  as product_name',
+                'pd.products_description as product_description',
+                'pd.products_viewed as product_viewed',
+                'p.products_quantity as product_quantity',
+                'p.products_video_link as product_video_link',
+                'p.products_price as product_price',
+                'p.products_weight as product_weight',
+                'p.products_weight_unit as product_weight_unit',
+                'p.products_status as product_status',
+                'p.is_current as is_current_product',
+                'p.products_tax_class_id as product_tax_class_id',
+                'p.manufacturers_id as product_manufacturer_id',
+                'p.products_ordered as product_ordered',
+                'p.products_liked as product_liked',
+                'p.low_limit as low_limit',
+                'p.products_type as product_type',
+                'p.products_min_order as product_min_order',
+                'p.products_max_order as product_max_order',
+                'p.products_max_stock as product_max_stock',
+                'p.products_price_market as product_price_market',
+                'p.products_points as product_points',
+                'p.products_points_redeem as product_points_redeem',
+                'p.products_points_bonus as product_points_bonus',
+                'p.products_note as product_note',
+                'p.products_sku as product_sku',
+                'p.products_msd as has_msd',
+                'p.sb_unique_id as product_sb_unique_id',
+                'p.expire_date as product_expire_date',
+                'p.products_image as main_image_id',
+                'h.hotcats_id as hotcat_id',
+                'h.hotcat_name as hotcat_name',
+                'h.hotcats_color_code as hotcat_color_code',
+                's.specials_new_products_price as discounted_price',
+                's.expires_date as discounted_expires_date'
+            )->limit(50)
+            ->get();
+
+        foreach($products as $p){
+
+            if($p->hotcat_id == null){
+                unset($p->hotcat_id);
+            }
+            if($p->hotcat_name == null){
+                unset($p->hotcat_name);
+            }
+            if($p->hotcat_color_code == null){
+                unset($p->hotcat_color_code);
+            }
+            if($p->discounted_expires_date == null){
+                unset($p->discounted_expires_date);
+            }
+            else{
+                $p->discounted_expires_date = date('Y-m-d', $p->discounted_expires_date);
+            }
+            if($p->discounted_price == null){
+                unset($p->discounted_price);
+            }
+            else{
+                $special_price = $p->discounted_price;
+
+                $discount = round((($p->product_price - $special_price) / $p->product_price) * 100);
+
+                $p->discount = $discount;
+            }
+
+            if($p->has_msd == 'Y'){
+                $msd = [];
+                $p_msd = DB::table('products_msd')->where('products_id', $p->product_id)->where('discount', '<>', 0)->where('discount', '<>', NULL)->get();
+
+                if(!empty($p_msd)){
+                    $cnt = 0;
+                    foreach($p_msd as $key => $m){
+                        $msd[$key] = DB::table('memberships')->select('membership_id', 'membership_name')->where('membership_id', $m->level_id)->first();
+                        $msd[$key]->discount =  $m->discount;
+                    }
+                    $p->msd_info = $msd;
+                }
+            }
+
+
+            //$p_img = DB::table('products_images')->where('products_id', $p->product_id)->where('image', '<>', NULL)->get();
+            $p_img = DB::table('product_images_cloud')->where('product_id', $p->product_id)->get();
+
+
+            if(!empty($p_img)){
+
+                $images = [];
+                $cnt = 0;
+                // $p_main_img = DB::table('image_categories')->where('image_id', $p->main_image_id)->first()->path;
+                $p_main_img = $p_img->where('image_no', 0)->first() != null ? $p_img->where('image_no', 0)->first()->url : '';
+                $images[0] = $p_main_img;
+                $images[1] = $p_img->where('image_no', 1)->first() != null ? $p_img->where('image_no', 1)->first()->url : '';
+                $images[2] = $p_img->where('image_no', 2)->first() != null ? $p_img->where('image_no', 2)->first()->url : '';
+                $images[3] = $p_img->where('image_no', 3)->first() != null ? $p_img->where('image_no', 3)->first()->url : '';
+
+
+                /* foreach($p_img as $mg){
+                    $img = DB::table('image_categories')->where('image_id', $mg->image)->first()->path;
+                    $cnt++;
+                    $images[$cnt] = $img;
+                } */
+
+                $p->product_images_path = $images;
+            }
+        }
+
+
+
+        return response()->json(['back_in_stock_products' => $products]);
+    }
+
     public function shipping_methods(Request $request){
         $shipping_methods = DB::table('shipping_methods')->where('status',1)->get();
         $method_details = [];

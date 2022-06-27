@@ -455,6 +455,8 @@ Route::group(['namespace' => 'App', 'middleware' => 'cors'], function () {
     Route::get('/getcurrencies', 'AppSettingController@getcurrencies');
 
     // Route::post('/get-super-deals', 'MyProductController@get_super_deals');
+
+    Route::post('customerregistration','CustomersController@customerregistration');
     
     Route::post('/get-super-deals', 'MyNewProductController@get_super_deals');
     
@@ -479,11 +481,13 @@ Route::group(['namespace' => 'App', 'middleware' => 'cors'], function () {
     Route::post('/get-all-pages', 'MyNewProductController@all_pages');
     
     Route::post('get-shipping-methods', 'MyNewProductController@shipping_methods');
-    //Registeration 
+
+    Route::post('get-back-in-stock', 'MyNewProductController@get_back_in_stock');
+
     
     
         
-    Route::post('customerregistration','CustomersController@customerregistration');
+
 
     
     

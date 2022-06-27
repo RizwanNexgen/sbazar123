@@ -200,7 +200,7 @@ class AdminController extends Controller
 		}
 		
 		$outofstocks = DB::table('products')
-            ->select('products_id','products_min_stock','products_in_stock')
+            ->where('products_in_stock','=', 0)
             ->get(); 
         
         $outofstocks_ids = [];   
