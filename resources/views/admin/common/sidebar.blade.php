@@ -460,7 +460,8 @@
 
             <li class="{{ Request::is('admin/appsettings') ? 'active' : '' }}"><a href="{{ URL::to('admin/appsettings')}}"><i class="fa fa-circle-o"></i> {{ trans('labels.link_setting') }}</a></li>
             
-            <li class="{{ Request::is('admin/appmenus/display') ? 'active' : '' }}"><a href="{{ URL::to('admin/appmenus/display')}}"><i class="fa fa-circle-o"></i> Menubar</a></li>
+            <li class="{{ Request::is('admin/appmenus/display') ? 'active' : '' }}"><a href="{{ URL::to('admin/appmenus/display')}}"><i class="fa fa-circle-o"></i> Menubar</a></li><li class="{{ Request::is('admin/appmenus/display') ? 'active' : '' }}"><a href="{{ URL::to('admin/appmenus/display')}}"><i class="fa fa-circle-o"></i> Menubar</a></li>
+              <li class="{{ Request::is('admin/appmenus/splash_screen') ? 'active' : '' }}"><a href="{{ URL::to('admin/appmenus/splash_screen')}}"><i class="fa fa-circle-o"></i> Splash Screen</a></li>
             
             <li class="treeview {{ Request::is('admin/faq/*') ? 'active' : '' }} {{ Request::is('admin/faq-cat/*') ? 'active' : '' }}">
               <a href="#">

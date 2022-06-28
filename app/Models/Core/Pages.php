@@ -60,6 +60,7 @@ public static function addnewpage($request)
   		$page_id = DB::table('pages')->insertGetId([
   					'slug'		 			 =>   $slug,
   					'type'		 			 =>   1,
+                    'section'		 		  =>   $request->section,
   					'status'		 		 =>   $request->status,
   					]);
 
@@ -136,6 +137,7 @@ public static function updatepage($request)
 
   		DB::table('pages')->where('page_id','=',$page_id)->update([
   					'slug'		 			 =>   $slug,
+                    'section'		 		  =>   $request->section,
   					'type'		 			 =>   1,
   					'status'		 		 =>   $request->status,
   					]);

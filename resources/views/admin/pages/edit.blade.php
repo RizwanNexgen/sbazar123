@@ -55,6 +55,14 @@
                                                     <span class="help-block" style="font-weight: normal;font-size: 11px;margin-bottom: 0;">{{ trans('labels.pageSlugWithDashesText') }}</span>
                                                 </div>
                                             </div>
+                                                <div class="form-group">
+                                                    <label for="name" class="col-sm-2 col-md-3 control-label">Section</label>
+                                                    <div class="col-sm-10 col-md-4">
+                                                        {!! Form::text('section',$result['editPage'][0]->section, array('class'=>'form-control field-validate', 'id'=>'section')) !!}
+                                                        <span class="help-block" style="font-weight: normal;font-size: 11px;margin-bottom: 0;">Please enter the page section</span>
+                                                    </div>
+                                                </div>
+
 
                                             @foreach($result['description'] as $description_data)
 

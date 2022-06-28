@@ -163,7 +163,7 @@
         <div class="form-group">
             <label for="name" class="col-sm-2 col-md-3 control-label">Enter Min Order<span style="color:red;">*</span></label>
             <div class="col-sm-10 col-md-8">
-                <input type="text" id="products_min_order" name="products_min_order" value="" class="form-control">
+                <input type="text" id="products_min_order" name="products_min_order" value="1" class="form-control">
                 <span class="help-block" style="font-weight: normal;font-size: 11px;margin-bottom: 0;">
                     Enter Min order</span>
             </div>
@@ -338,9 +338,9 @@
             <label for="name" class="col-sm-2 col-md-3 control-label">{{ trans('labels.TaxClass') }} </label>
             <div class="col-sm-10 col-md-8">
                 <select class="form-control field-validate" name="tax_class_id">
-                    <option selected>{{ trans('labels.SelectTaxClass') }}</option>
+                    {{--<option selected>{{ trans('labels.SelectTaxClass') }}</option>--}}
                     @foreach ($result['taxClass'] as $taxClass)
-                    <option value="{{ $taxClass->tax_class_id }}">{{ $taxClass->tax_class_title }}</option>
+                    <option <?php if($taxClass->tax_class_id == 1){ echo 'selected'; }?> value="{{ $taxClass->tax_class_id }}">{{ $taxClass->tax_class_title }}</option>
                     @endforeach
                 </select>
                 <span class="help-block" style="font-weight: normal;font-size: 11px;margin-bottom: 0;">
@@ -371,7 +371,7 @@
       <div class="form-group">
             <label class="col-sm-2 col-md-3 control-label">Max Orders</label>
             <div class="col-sm-10 col-md-8">
-                <input type="text" class="form-control" value="@if(empty(old('max_order'))){{'10'}}@else{{old('max_order')}}@endif" name="max_order" />
+                <input type="text" class="form-control" value="@if(empty(old('max_order'))){{'5'}}@else{{old('max_order')}}@endif" name="max_order" />
                 <span class="help-block" style="font-weight: normal;font-size: 11px;margin-bottom: 0;">Maximum number of orders</span>
             </div>                                                    
         </div>

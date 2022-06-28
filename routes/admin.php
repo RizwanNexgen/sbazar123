@@ -962,6 +962,9 @@ Route::group(['middleware' => ['installer']], function () {
         
 
         Route::get('appmenus/display', 'AppMenuController@display');
+        Route::get('appmenus/splash_screen', 'HomeBannersController@splash_screen');
+
+
 
         Route::match(['get', 'post'], 'appmenus/add', 'AppMenuController@add');
 

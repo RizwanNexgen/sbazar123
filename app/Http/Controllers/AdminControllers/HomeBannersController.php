@@ -32,6 +32,16 @@ class HomeBannersController extends Controller
     return view("admin.settings.web.homebanners.index",$title)->with('result', $result)->with('allimage', $allimage);
   }
 
+    public function splash_screen(){
+        $title = array('pageTitle' => Lang::get("labels.Home Banners"));
+        $result['banners'] = $this->HomeBanners->index();
+        $result['languages'] = $this->varseting->getLanguages();
+        $allimage = $this->images->getimages();
+        //dd($result);
+        $result['commonContent'] = $this->Setting->commonContent();
+        return view("admin.app_menus.splash_screen",$title)->with('result', $result)->with('allimage', $allimage);
+    }
+
  
   public function insert(Request $request){
        // dd($request->all());

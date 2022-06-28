@@ -21,6 +21,11 @@ class AppMenuController extends Controller
     $this->myVarsetting = new SiteSettingController($setting);
   }
 
+  public function splash_screen(){
+      return view("admin.app_menus.splash_screen");
+  }
+
+
   public function display(){
     $data = [];
     $data['pageTitle'] = 'Menubar'; 
