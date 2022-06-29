@@ -966,6 +966,8 @@ Route::group(['middleware' => ['installer']], function () {
 
 
 
+
+
         Route::match(['get', 'post'], 'appmenus/add', 'AppMenuController@add');
 
         Route::match(['get', 'post'], 'appmenus/edit/{id}', 'AppMenuController@edit');
@@ -1099,6 +1101,7 @@ Route::group(['middleware' => ['installer']], function () {
         Route::get('/homebanners', 'HomeBannersController@display')->middleware('view_web_setting', 'website_routes');
 
         Route::post('/homebanners/insert', 'HomeBannersController@insert')->middleware('view_web_setting', 'website_routes');
+        Route::post('homebanners/store_splash_screen', 'HomeBannersController@store_splash_screen');
 
         
 

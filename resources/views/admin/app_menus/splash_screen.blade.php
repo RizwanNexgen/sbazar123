@@ -22,59 +22,89 @@
                         <!-- /.box-header -->
                         <div class="box-body">
                             <div class="row">
-                                <div class="col-xs-12">
+                                <div class="col-xs-8">
                                     <div class="nav-tabs-custom">
                                         <ul class="nav nav-tabs"> </ul>
-                                        <form method="{{url('admin/homebanners/insert')}}" action="" class="form-horizontal" enctype='multipart/form-data'>
-
+                                        <form method="POST" action="{{url('admin/homebanners/store_splash_screen')}}" class="form-horizontal" enctype='multipart/form-data'>
+                                        @csrf
                                         <div class="">
                                             <div class="row">
                                                 <div class="col-xs-12">
-                                                    <div class="form-group">
-                                                        <label for="name" class="col-sm-2 col-md-3 control-label">1st Screen</label>
-                                                        <div class="col-sm-10 col-md-4">
-                                                            <!-- Modal -->
-                                                            <input type="file" name="1st"> </div> @if(!empty($banner['path']))
-                                                            <div class="form-group">
-                                                                <label for="name" class="col-sm-2 col-md-3 control-label"></label>
-                                                                <div class="col-sm-10 col-md-4"> <img src="{{asset($banner['path'])}}" alt="" width=" 100px"> </div>
-                                                            </div> @endif </div>
-                                                    <div class="form-group">
-                                                        <label for="name" class="col-sm-2 col-md-3 control-label">2nd Screen</label>
-                                                        <div class="col-sm-10 col-md-4">
-                                                            <!-- Modal -->
-                                                            <input type="file" name="1st"> </div> @if(!empty($banner['path']))
-                                                            <div class="form-group">
-                                                                <label for="name" class="col-sm-2 col-md-3 control-label"></label>
-                                                                <div class="col-sm-10 col-md-4"> <img src="{{asset($banner['path'])}}" alt="" width=" 100px"> </div>
-                                                            </div> @endif </div>
-                                                    <div class="form-group">
-                                                        <label for="name" class="col-sm-2 col-md-3 control-label">3rd Screen</label>
-                                                        <div class="col-sm-10 col-md-4">
-                                                            <!-- Modal -->
-                                                            <input type="file" name="1st"> </div> @if(!empty($banner['path']))
-                                                            <div class="form-group">
-                                                                <label for="name" class="col-sm-2 col-md-3 control-label"></label>
-                                                                <div class="col-sm-10 col-md-4"> <img src="{{asset($banner['path'])}}" alt="" width=" 100px"> </div>
-                                                            </div> @endif </div>
-                                                    <div class="form-group">
-                                                        <label for="name" class="col-sm-2 col-md-3 control-label">4th Screen</label>
-                                                        <div class="col-sm-10 col-md-4">
-                                                            <!-- Modal -->
-                                                            <input type="file" name="1st"> </div> @if(!empty($banner['path']))
-                                                            <div class="form-group">
-                                                                <label for="name" class="col-sm-2 col-md-3 control-label"></label>
-                                                                <div class="col-sm-10 col-md-4"> <img src="{{asset($banner['path'])}}" alt="" width=" 100px"> </div>
-                                                            </div> @endif </div>
-                                                    <div class="form-group">
-                                                        <label for="name" class="col-sm-2 col-md-3 control-label">5th Screen</label>
-                                                        <div class="col-sm-10 col-md-4">
-                                                            <!-- Modal -->
-                                                            <input type="file" name="1st"> </div> @if(!empty($banner['path']))
-                                                            <div class="form-group">
-                                                                <label for="name" class="col-sm-2 col-md-3 control-label"></label>
-                                                                <div class="col-sm-10 col-md-4"> <img src="{{asset($banner['path'])}}" alt="" width=" 100px"> </div>
-                                                            </div> @endif </div>
+
+                                                    <table class="table">
+                                                        <tr>
+                                                            <td style="text-align: end; vertical-align: middle;">
+                                                               <div >
+                                                                   First Screen
+                                                                   <input type="file" name="first" style="display: inline-block">
+                                                               </div>
+                                                            </td>
+
+                                                            <td style="text-align: start; vertical-align: middle; ">
+                                                                @if(!empty($result['first']))
+                                                                    <img src="{{$result['first']->url}}" alt="" width=" 100px">
+                                                                @endif
+                                                            </td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td style="text-align: end; vertical-align: middle;">
+                                                                <div >
+                                                                    Second Screen
+                                                                    <input type="file" name="second" style="display: inline-block">
+                                                                </div>
+                                                            </td>
+
+                                                            <td style="text-align: start; vertical-align: middle; ">
+                                                                @if(!empty($result['second']))
+                                                                    <img src="{{$result['second']->url}}" alt="" width=" 100px">
+                                                                @endif
+                                                            </td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td style="text-align: end; vertical-align: middle;">
+                                                                <div >
+                                                                    Third Screen
+                                                                    <input type="file" name="third" style="display: inline-block">
+                                                                </div>
+                                                            </td>
+
+                                                            <td style="text-align: start; vertical-align: middle; ">
+                                                                @if(!empty($result['third']))
+                                                                    <img src="{{$result['third']->url}}" alt="" width=" 100px">
+                                                                @endif
+                                                            </td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td style="text-align: end; vertical-align: middle;">
+                                                                <div >
+                                                                    Fourth Screen
+                                                                    <input type="file" name="fourth" style="display: inline-block">
+                                                                </div>
+                                                            </td>
+
+                                                            <td style="text-align: start; vertical-align: middle; ">
+                                                                @if(!empty($result['fourth']))
+                                                                    <img src="{{$result['fourth']->url}}" alt="" width=" 100px">
+                                                                @endif
+                                                            </td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td style="text-align: end; vertical-align: middle;">
+                                                                <div >
+                                                                    Fifth Screen
+                                                                    <input type="file" name="fifth" style="display: inline-block">
+                                                                </div>
+                                                            </td>
+
+                                                            <td style="text-align: start; vertical-align: middle; ">
+                                                                @if(!empty($result['fifth']))
+                                                                    <img src="{{$result['fifth']->url}}" alt="" width=" 100px">
+                                                                @endif
+                                                            </td>
+                                                        </tr>
+                                                    </table>
+
+
                                                 </div>
                                             </div>
                                         </div>
