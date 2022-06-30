@@ -61,6 +61,8 @@ return [
             'secret' => env('S3_SECRET_ACCESS_KEY'),
             'region' => env('S3_REGION'),
             'bucket' => env('S3_BUCKET_NAME'),
+            'ACL' => 'public',
+            'visibility' => 'public',
             'url' => env('AWS_URL'),
 
         ],

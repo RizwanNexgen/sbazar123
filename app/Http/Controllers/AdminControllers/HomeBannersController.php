@@ -82,13 +82,14 @@ class HomeBannersController extends Controller
 
             $file_name = date('m-d-Y_H:i:s') . '_'. $request->file('first')->getClientOriginalName();
             $s3_credential['path'] = env('S3_BUCKET_NAME'). 'product-images/' . $file_name;
-            $path =  'product-images/' . $file_name;
+            $path =  'splash_screen_files/' . $file_name;
 
 //            $disk = \Storage::disk('s3');
 //            $disk->put($path, fopen($source, 'r+'));
-            \Storage::disk('s3')->put($path, $source, 'public');
+            \Storage::disk('s3')->put($path, $source, ['x-amz-acl' => 'public', 'ACL' => 'public-read']);
+//            \Storage::disk('s3')->setVisibility($path, 'public');
 
-            $url =  \Storage::disk('s3')->url($path);
+        return    $url =  \Storage::disk('s3')->url($path);
 
 //            $request->file('first')->store($s3_credential);
 
