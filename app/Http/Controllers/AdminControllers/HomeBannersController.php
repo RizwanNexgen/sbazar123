@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Lang;
 use Exception;
 use App\Models\Core\Images;
+use Storage;
 
 class HomeBannersController extends Controller
 {
@@ -49,126 +50,202 @@ class HomeBannersController extends Controller
     }
 
     public function store_splash_screen(Request $request){
-        \Tinify\setKey(env("TINIFY_API_KEY"));
-        $s3_credential = array(
-            "service" => "s3",
-            "aws_access_key_id" => env('S3_ACCESS_KEY_ID'),
-            "aws_secret_access_key" => env("S3_SECRET_ACCESS_KEY"),
-            "region" => env("S3_REGION"),
-            /* "headers" => array("Cache-Control" => "max-age=31536000, public"), */
-            "path" => "",
-        );
-
-
+        // \Tinify\setKey(config("app.TINIFY_API_KEY"));
 
         if($request->hasFile('first')){
 
             $check_type = $request->file('first')->getClientMimeType();
             $type = '';
 
-            if(strpos($check_type, 'image') == true){
+            if(strpos($check_type, 'image') !== false){
                 $type = 'IMAGE';
-//               $source = \Tinify\fromFile($request->file('first'));
-//               dd($source);
+                // $source = \Tinify\fromFile($request->file('first'));
                 $source = $request->file('first');
             }else{
                $source = $request->file('first');
                 $type = 'VIDEO';
-//                dd($source);
+            }
+
+           $check =  DB::table('splash_screen_files')->where('splash_screen_id', 1)->first();
+            if($check){
+
+                // if(Storage::disk('s3')->exists($check->path)) {
+                //     Storage::disk('s3')->delete($check->path);
+                // }
+
+                DB::table('splash_screen_files')->where('splash_screen_id', 1)->delete();
             }
 
 
-            DB::table('splash_screen_files')->where('splash_screen_id', 1)->delete();
-
             $file_name = date('m-d-Y_H:i:s') . '_'. $request->file('first')->getClientOriginalName();
-            $s3_credential['path'] = env('S3_BUCKET_NAME'). 'product-images/' . $file_name;
-            $path =  'splash_screen_files/' . $file_name;
+            $path =  'splash_screen_files';
 
-//            $disk = \Storage::disk('s3');
-//            $disk->put($path, fopen($source, 'r+'));
-            \Storage::disk('s3')->put($path, $source, ['x-amz-acl' => 'public', 'ACL' => 'public-read']);
-//            \Storage::disk('s3')->setVisibility($path, 'public');
+            $file = \Storage::disk('s3')->put($path, $source);
 
-        return    $url =  \Storage::disk('s3')->url($path);
-
-//            $request->file('first')->store($s3_credential);
+            $url = 'https://sbazar-images.s3.eu-central-1.amazonaws.com/'.$file;
 
             DB::table('splash_screen_files')->insert([
                 'splash_screen_id'=> 1,
                 'url' => $url,
+                'path'=>$file,
                 'type'=>$type
             ]);
         }
         if($request->hasFile('second')){
 
-            $check_type = $request->file('second')->getClientMimeType();
-            DB::table('splash_screen_files')->where('splash_screen_id', 2)->delete();
+        $check_type = $request->file('second')->getClientMimeType();
+            $type = '';
+
+            if(strpos($check_type, 'image')!== false){
+                $type = 'IMAGE';
+                // $source = \Tinify\fromFile($request->file('second'));
+                $source = $request->file('first');
+            }else{
+               $source = $request->file('second');
+                $type = 'VIDEO';
+            }
+ 
+
+           $check =  DB::table('splash_screen_files')->where('splash_screen_id', 2)->first();
+            if($check){
+
+                // if(Storage::disk('s3')->exists($check->path)) {
+                //     Storage::disk('s3')->delete($check->path);
+                // }
+
+                DB::table('splash_screen_files')->where('splash_screen_id', 2)->delete();
+            }
+
 
             $file_name = date('m-d-Y_H:i:s') . '_'. $request->file('second')->getClientOriginalName();
-            $source = \Tinify\fromFile($request->file('second'));
+            $path =  'splash_screen_files';
 
-            $s3_credential['path'] = env('S3_BUCKET_NAME'). '/splash_screen_files'. '/' . $file_name;
+            $file = \Storage::disk('s3')->put($path, $source);
 
-            $source->store($s3_credential);
+            $url = 'https://sbazar-images.s3.eu-central-1.amazonaws.com/'.$file;
 
             DB::table('splash_screen_files')->insert([
                 'splash_screen_id'=> 2,
-                'url' => 'http://'.env('S3_BUCKET_NAME') . '.s3.' . env('S3_REGION') . '.amazonaws.com/splash_screen_files/' . $file_name,
-                'type'=>'IMAGE'
+                'url' => $url,
+                'path'=>$file,
+                'type'=>$type
             ]);
         }
         if($request->hasFile('third')){
 
             $check_type = $request->file('third')->getClientMimeType();
-            DB::table('splash_screen_files')->where('splash_screen_id', 3)->delete();
+            $type = '';
+
+            if(strpos($check_type, 'image') !== false){
+                $type = 'IMAGE';
+                // $source = \Tinify\fromFile($request->file('third'));
+                $source = $request->file('first');
+            }else{
+               $source = $request->file('third');
+                $type = 'VIDEO';
+            }
+
+           $check =  DB::table('splash_screen_files')->where('splash_screen_id', 3)->first();
+            if($check){
+
+                // if(Storage::disk('s3')->exists($check->path)) {
+                //     Storage::disk('s3')->delete($check->path);
+                // }
+
+                DB::table('splash_screen_files')->where('splash_screen_id', 3)->delete();
+            }
+
 
             $file_name = date('m-d-Y_H:i:s') . '_'. $request->file('third')->getClientOriginalName();
-            $source = \Tinify\fromFile($request->file('third'));
+            $path =  'splash_screen_files';
 
-            $s3_credential['path'] = env('S3_BUCKET_NAME'). '/splash_screen_files'. '/' . $file_name;
+            $file = \Storage::disk('s3')->put($path, $source);
 
-            $source->store($s3_credential);
+            $url = 'https://sbazar-images.s3.eu-central-1.amazonaws.com/'.$file;
 
             DB::table('splash_screen_files')->insert([
                 'splash_screen_id'=> 3,
-                'url' => 'http://'.env('S3_BUCKET_NAME') . '.s3.' . env('S3_REGION') . '.amazonaws.com/splash_screen_files/' . $file_name,
-                'type'=>'IMAGE'
+                'url' => $url,
+                'path'=>$file,
+                'type'=>$type
             ]);
         }
         if($request->hasFile('fourth')){
 
             $check_type = $request->file('fourth')->getClientMimeType();
-            DB::table('splash_screen_files')->where('splash_screen_id', 4)->delete();
+            $type = '';
+
+            if(strpos($check_type, 'image') !== false){
+                $type = 'IMAGE';
+                // $source = \Tinify\fromFile($request->file('fourth'));
+                $source = $request->file('first');
+            }else{
+               $source = $request->file('fourth');
+                $type = 'VIDEO';
+            }
+
+           $check =  DB::table('splash_screen_files')->where('splash_screen_id', 4)->first();
+            if($check){
+
+                // if(Storage::disk('s3')->exists($check->path)) {
+                //     Storage::disk('s3')->delete($check->path);
+                // }
+
+                DB::table('splash_screen_files')->where('splash_screen_id', 4)->delete();
+            }
+
 
             $file_name = date('m-d-Y_H:i:s') . '_'. $request->file('fourth')->getClientOriginalName();
-            $source = \Tinify\fromFile($request->file('fourth'));
+            $path =  'splash_screen_files';
 
-            $s3_credential['path'] = env('S3_BUCKET_NAME'). '/splash_screen_files'. '/' . $file_name;
+            $file = \Storage::disk('s3')->put($path, $source);
 
-            $source->store($s3_credential);
+            $url = 'https://sbazar-images.s3.eu-central-1.amazonaws.com/'.$file;
 
             DB::table('splash_screen_files')->insert([
                 'splash_screen_id'=> 4,
-                'url' => 'http://'.env('S3_BUCKET_NAME') . '.s3.' . env('S3_REGION') . '.amazonaws.com/splash_screen_files/' . $file_name,
-                'type'=>'IMAGE'
+                'url' => $url,
+                'path'=>$file,
+                'type'=>$type
             ]);
         }
         if($request->hasFile('fifth')){
 
             $check_type = $request->file('fifth')->getClientMimeType();
-            DB::table('splash_screen_files')->where('splash_screen_id', 5)->delete();
+            $type = '';
+
+            if(strpos($check_type, 'image') !== falsee){
+                $type = 'IMAGE';
+                // $source = \Tinify\fromFile($request->file('fifth'));
+                $source = $request->file('first');
+            }else{
+               $source = $request->file('fifth');
+                $type = 'VIDEO';
+            }
+
+           $check =  DB::table('splash_screen_files')->where('splash_screen_id', 5)->first();
+            if($check){
+
+                // if(Storage::disk('s3')->exists($check->path)) {
+                //     Storage::disk('s3')->delete($check->path);
+                // }
+
+                DB::table('splash_screen_files')->where('splash_screen_id', 5)->delete();
+            }
+
 
             $file_name = date('m-d-Y_H:i:s') . '_'. $request->file('fifth')->getClientOriginalName();
-            $source = \Tinify\fromFile($request->file('fifth'));
+            $path =  'splash_screen_files';
 
-            $s3_credential['path'] = env('S3_BUCKET_NAME'). '/splash_screen_files'. '/' . $file_name;
+            $file = \Storage::disk('s3')->put($path, $source);
 
-            $source->store($s3_credential);
+            $url = 'https://sbazar-images.s3.eu-central-1.amazonaws.com/'.$file;
 
             DB::table('splash_screen_files')->insert([
                 'splash_screen_id'=> 5,
-                'url' => 'http://'.env('S3_BUCKET_NAME') . '.s3.' . env('S3_REGION') . '.amazonaws.com/splash_screen_files/' . $file_name,
-                'type'=>'IMAGE'
+                'url' => $url,
+                'path'=>$file,
+                'type'=>$type
             ]);
         }
 

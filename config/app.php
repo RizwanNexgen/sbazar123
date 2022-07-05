@@ -49,6 +49,8 @@ return [
     */
 
     'env' => env('APP_ENV', 'production'),
+    'TINIFY_API_KEY' => env('TINIFY_API_KEY', 'Rk6HfwYKYFwRD7d5XvSR9VW0g4R2nZWs'),
+
 
     /*
     |--------------------------------------------------------------------------

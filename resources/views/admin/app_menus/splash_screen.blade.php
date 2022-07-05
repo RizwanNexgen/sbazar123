@@ -41,9 +41,16 @@
                                                             </td>
 
                                                             <td style="text-align: start; vertical-align: middle; ">
-                                                                @if(!empty($result['first']))
-                                                                    <img src="{{$result['first']->url}}" alt="" width=" 100px">
+                                                               
+                                                                @if($result['first']->type == 'VIDEO')
+                                                                <video width="320" height="240" controls>
+                                                                      <source src="{{$result['first']->url}}" type="video/mp4">
+                                                                
+                                                                </video>
+                                                                @else
+                                                                <img src="{{$result['first']->url}}" alt="" width=" 100px">
                                                                 @endif
+                                                                    
                                                             </td>
                                                         </tr>
                                                         <tr>

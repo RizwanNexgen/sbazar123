@@ -28,6 +28,12 @@ class MyNewProductController extends Controller
     {
         $this->Setting = $setting;
     }
+    
+    public function get_splash_screens(){
+        $screens = DB::table('splash_screen_files')->get();
+        
+        return response()->json(['splash_screens'=>$screens]);
+    }
 
     public function get_back_in_stock(){
         $products = DB::table('products as p')

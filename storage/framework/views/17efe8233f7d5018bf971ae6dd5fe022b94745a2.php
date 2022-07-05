@@ -461,7 +461,8 @@
 
             <li class="<?php echo e(Request::is('admin/appsettings') ? 'active' : ''); ?>"><a href="<?php echo e(URL::to('admin/appsettings')); ?>"><i class="fa fa-circle-o"></i> <?php echo e(trans('labels.link_setting')); ?></a></li>
             
-            <li class="<?php echo e(Request::is('admin/appmenus/display') ? 'active' : ''); ?>"><a href="<?php echo e(URL::to('admin/appmenus/display')); ?>"><i class="fa fa-circle-o"></i> Menubar</a></li>
+            <li class="<?php echo e(Request::is('admin/appmenus/display') ? 'active' : ''); ?>"><a href="<?php echo e(URL::to('admin/appmenus/display')); ?>"><i class="fa fa-circle-o"></i> Menubar</a></li><li class="<?php echo e(Request::is('admin/appmenus/display') ? 'active' : ''); ?>"><a href="<?php echo e(URL::to('admin/appmenus/display')); ?>"><i class="fa fa-circle-o"></i> Menubar</a></li>
+              <li class="<?php echo e(Request::is('admin/appmenus/splash_screen') ? 'active' : ''); ?>"><a href="<?php echo e(URL::to('admin/appmenus/splash_screen')); ?>"><i class="fa fa-circle-o"></i> Splash Screen</a></li>
             
             <li class="treeview <?php echo e(Request::is('admin/faq/*') ? 'active' : ''); ?> <?php echo e(Request::is('admin/faq-cat/*') ? 'active' : ''); ?>">
               <a href="#">

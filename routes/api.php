@@ -483,6 +483,8 @@ Route::group(['namespace' => 'App', 'middleware' => 'cors'], function () {
     Route::post('get-shipping-methods', 'MyNewProductController@shipping_methods');
 
     Route::post('get-back-in-stock', 'MyNewProductController@get_back_in_stock');
+    
+    Route::post('get-splash-screens', 'MyNewProductController@get_splash_screens');
 
     
     

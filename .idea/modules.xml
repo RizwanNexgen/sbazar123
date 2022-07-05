@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/sbazar_backend.iml" filepath="$PROJECT_DIR$/.idea/sbazar_backend.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/sbazargit.iml" filepath="$PROJECT_DIR$/.idea/sbazargit.iml" />
     </modules>
   </component>
 </project>

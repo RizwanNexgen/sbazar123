@@ -19,6 +19,24 @@
             'reference' => '5cf4c586e9b40cf01d8b9bc35e67f8d932318d4b',
             'dev_requirement' => false,
         ),
+        'aws/aws-crt-php' => array(
+            'pretty_version' => 'v1.0.2',
+            'version' => '1.0.2.0',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../aws/aws-crt-php',
+            'aliases' => array(),
+            'reference' => '3942776a8c99209908ee0b287746263725685732',
+            'dev_requirement' => false,
+        ),
+        'aws/aws-sdk-php' => array(
+            'pretty_version' => '3.228.5',
+            'version' => '3.228.5.0',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../aws/aws-sdk-php',
+            'aliases' => array(),
+            'reference' => '8b6e626e02c42310c3ce8615acc7b2c992e48c97',
+            'dev_requirement' => false,
+        ),
         'beyondcode/laravel-dump-server' => array(
             'pretty_version' => '1.3.0',
             'version' => '1.3.0.0',
@@ -185,12 +203,12 @@
             'dev_requirement' => true,
         ),
         'guzzlehttp/guzzle' => array(
-            'pretty_version' => '6.5.6',
-            'version' => '6.5.6.0',
+            'pretty_version' => '6.5.8',
+            'version' => '6.5.8.0',
             'type' => 'library',
             'install_path' => __DIR__ . '/../guzzlehttp/guzzle',
             'aliases' => array(),
-            'reference' => 'f092dd734083473658de3ee4bef093ed77d2689c',
+            'reference' => 'a52f0440530b54fa079ce76e8c5d196a42cad981',
             'dev_requirement' => false,
         ),
         'guzzlehttp/promises' => array(
@@ -203,12 +221,12 @@
             'dev_requirement' => false,
         ),
         'guzzlehttp/psr7' => array(
-            'pretty_version' => '1.8.5',
-            'version' => '1.8.5.0',
+            'pretty_version' => '1.9.0',
+            'version' => '1.9.0.0',
             'type' => 'library',
             'install_path' => __DIR__ . '/../guzzlehttp/psr7',
             'aliases' => array(),
-            'reference' => '337e3ad8e5716c15f9657bd214d16cc5e69df268',
+            'reference' => 'e98e3e6d4f86621a9b75f623996e6bbdeb4b9318',
             'dev_requirement' => false,
         ),
         'hamcrest/hamcrest-php' => array(
@@ -502,6 +520,15 @@
             'reference' => '094defdb4a7001845300334e7c1ee2335925ef99',
             'dev_requirement' => false,
         ),
+        'league/flysystem-aws-s3-v3' => array(
+            'pretty_version' => '1.0.29',
+            'version' => '1.0.29.0',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../league/flysystem-aws-s3-v3',
+            'aliases' => array(),
+            'reference' => '4e25cc0582a36a786c31115e419c6e40498f6972',
+            'dev_requirement' => false,
+        ),
         'league/mime-type-detection' => array(
             'pretty_version' => '1.11.0',
             'version' => '1.11.0.0',
@@ -545,6 +572,15 @@
             'install_path' => __DIR__ . '/../monolog/monolog',
             'aliases' => array(),
             'reference' => '247918972acd74356b0a91dfaa5adcaec069b6c0',
+            'dev_requirement' => false,
+        ),
+        'mtdowling/jmespath.php' => array(
+            'pretty_version' => '2.6.1',
+            'version' => '2.6.1.0',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../mtdowling/jmespath.php',
+            'aliases' => array(),
+            'reference' => '9b87907a81b87bc76d19a7fb2d61e61486ee9edb',
             'dev_requirement' => false,
         ),
         'myclabs/deep-copy' => array(
@@ -865,8 +901,8 @@
         'psr/log-implementation' => array(
             'dev_requirement' => false,
             'provided' => array(
-                0 => '1.0|2.0',
-                1 => '1.0.0 || 2.0.0 || 3.0.0',
+                0 => '1.0.0 || 2.0.0 || 3.0.0',
+                1 => '1.0|2.0',
             ),
         ),
         'psr/simple-cache' => array(
@@ -1074,8 +1110,8 @@
             'dev_requirement' => false,
         ),
         'symfony/deprecation-contracts' => array(
-            'pretty_version' => 'v2.5.1',
-            'version' => '2.5.1.0',
+            'pretty_version' => 'v2.5.2',
+            'version' => '2.5.2.0',
             'type' => 'library',
             'install_path' => __DIR__ . '/../symfony/deprecation-contracts',
             'aliases' => array(),
