@@ -99,7 +99,7 @@ class HomeBannersController extends Controller
             if(strpos($check_type, 'image')!== false){
                 $type = 'IMAGE';
                 // $source = \Tinify\fromFile($request->file('second'));
-                $source = $request->file('first');
+                $source = $request->file('second');
             }else{
                $source = $request->file('second');
                 $type = 'VIDEO';
@@ -139,7 +139,7 @@ class HomeBannersController extends Controller
             if(strpos($check_type, 'image') !== false){
                 $type = 'IMAGE';
                 // $source = \Tinify\fromFile($request->file('third'));
-                $source = $request->file('first');
+                $source = $request->file('third');
             }else{
                $source = $request->file('third');
                 $type = 'VIDEO';
@@ -178,7 +178,7 @@ class HomeBannersController extends Controller
             if(strpos($check_type, 'image') !== false){
                 $type = 'IMAGE';
                 // $source = \Tinify\fromFile($request->file('fourth'));
-                $source = $request->file('first');
+                $source = $request->file('fourth');
             }else{
                $source = $request->file('fourth');
                 $type = 'VIDEO';
@@ -214,10 +214,10 @@ class HomeBannersController extends Controller
             $check_type = $request->file('fifth')->getClientMimeType();
             $type = '';
 
-            if(strpos($check_type, 'image') !== falsee){
+            if(strpos($check_type, 'image') !== false){
                 $type = 'IMAGE';
                 // $source = \Tinify\fromFile($request->file('fifth'));
-                $source = $request->file('first');
+                $source = $request->file('fifth');
             }else{
                $source = $request->file('fifth');
                 $type = 'VIDEO';
@@ -306,7 +306,7 @@ class HomeBannersController extends Controller
      $title = array('pageTitle' => Lang::get("labels.EditSubCategories"));
      $result = array();
      $result['message'] = Lang::get("labels.Category has been updated successfully");
-     $last_modified 	=   date('y-m-d h:i:s');
+     $last_modified     =   date('y-m-d h:i:s');
      $parent_id = $request->parent_id;
      $categories_id = $request->id;
      $categories_status  = $request->categories_status;
@@ -341,7 +341,7 @@ class HomeBannersController extends Controller
 
      if($request->image_icone !==null){
          $uploadIcon = $request->image_icone;
-     }	else{
+     }  else{
          $uploadIcon = $request->oldIcon;
      }
 
